@@ -99,3 +99,14 @@ Ansible role.
   careful measurement of actual hardware. Stubs establish structure only.
   → Mitigation: annotate stubs with the dimensions from the build guide so
   the next implementer has the numbers at hand.
+
+- **`synchronize` leaves files owned by root**: `ansible.posix.synchronize`
+  runs as the become user (root); transferred files may not be owned by `pi`.
+  → Mitigation: follow each `synchronize` task with an `ansible.builtin.file`
+  task (`recurse: true`) to enforce `pi:pi` ownership.
+
+- **`params.scad` wall thickness can be zero**: With current build-guide
+  dimensions (26mm depth, 6mm battery, 22mm electronics) the derived `wall`
+  evaluates to 0mm.
+  → Mitigation: clamp with `max(min_wall, …)` so future dimension adjustments
+  don't silently produce zero or negative walls.

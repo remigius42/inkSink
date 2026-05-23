@@ -1,0 +1,13 @@
+[Unit]
+Description=inksink Anki e-ink display
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=pi
+ExecStart=/usr/local/bin/inksink
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

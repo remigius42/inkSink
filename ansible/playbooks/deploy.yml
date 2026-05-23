@@ -1,0 +1,6 @@
+---
+- name: Deploy inksink application
+  hosts: all
+  become: true
+  roles:
+    - inksink

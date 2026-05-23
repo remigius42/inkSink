@@ -1,0 +1,3 @@
+vault_ankiweb_username: "your_ankiweb_email@example.com"
+vault_ankiweb_password: "your_ankiweb_password"
+vault_wifi_password: "your_wifi_password"

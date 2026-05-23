@@ -22,12 +22,14 @@ words:
   - imager
   - inksink
   - isort
+  - jetson
   - kanji
   - openspec
   - opsx
   - pisugar
   - pillow
   - pullup
+  - pycache
   - pycodestyle
   - pyflakes
   - pyproject
@@ -39,12 +41,14 @@ words:
   - setuptools
   - smbus
   - subpackages
+  - trixie
   - venv
   - waveshare
   - wkhtmltoimage
 ignoreWords:
   - elif
   - isdir
+  - lineinfile
   - startswith
 ignorePaths:
   - .git

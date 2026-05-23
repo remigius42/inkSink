@@ -1,10 +1,35 @@
+[project]
+name = "inksink"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "Pillow",
+    "requests",
+    "smbus2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-mock",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.black]
 line-length = 88
 target-version = ["py313"]
+exclude = "vendor/"
 
 [tool.ruff]
 line-length = 88
 target-version = "py313"
+exclude = ["vendor"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]  # pycodestyle, pyflakes, isort

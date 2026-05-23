@@ -1,0 +1,83 @@
+---
+- name: Ensure inksink directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: pi
+    group: pi
+    mode: "0755"
+  loop:
+    - "{{ inksink_dest_dir }}"
+    - "{{ inksink_vendor_dir }}"
+    - "{{ inksink_config_dir }}"
+
+- name: Synchronize inksink source
+  ansible.posix.synchronize:
+    src: "{{ inksink_src_dir }}/"
+    dest: "{{ inksink_dest_dir }}/"
+    delete: true
+    rsync_opts:
+      - "--exclude=__pycache__"
+      - "--exclude=*.pyc"
+  notify:
+    - Restart inksink
+
+- name: Set ownership of inksink source
+  ansible.builtin.file:
+    path: "{{ inksink_dest_dir }}"
+    owner: pi
+    group: pi
+    recurse: true
+
+- name: Synchronize waveshare vendor
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../../vendor/waveshare_epd/"
+    dest: "{{ inksink_vendor_dir }}/"
+    delete: true
+  notify:
+    - Restart inksink
+
+- name: Set ownership of waveshare vendor
+  ansible.builtin.file:
+    path: "{{ inksink_vendor_dir }}"
+    owner: pi
+    group: pi
+    recurse: true
+
+- name: Template config file
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "{{ inksink_config_dir }}/config.yml"
+    owner: pi
+    group: pi
+    mode: "0600"
+  notify:
+    - Restart inksink
+
+- name: Install shell wrapper
+  ansible.builtin.template:
+    src: inksink.j2
+    dest: "{{ inksink_wrapper }}"
+    owner: root
+    group: root
+    mode: "0755"
+  notify:
+    - Restart inksink
+
+- name: Install systemd service
+  ansible.builtin.copy:
+    src: inksink.service
+    dest: /etc/systemd/system/inksink.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart inksink
+
+- name: Enable and start inksink service
+  ansible.builtin.systemd:
+    name: "{{ inksink_service }}"
+    enabled: true
+    state: started
+    daemon_reload: true

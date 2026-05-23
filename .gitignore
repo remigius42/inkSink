@@ -4,6 +4,9 @@
 # spellchecker:ignore pyrightconfig pytype ropeproject scrapy sdist sessionx
 # spellchecker:ignore spyder spyderproject spyproject venv webassets
 
+# Ansible vault password — never commit
+/.vault-password
+
 # Personal scratchpad — gitignored to reduce noise
 /TODO.md
 

@@ -63,6 +63,14 @@ repos:
       - id: pyright
         files: \.py$
 
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v26.1.1
+    hooks:
+      - id: ansible-lint
+        files: \.(yaml|yml)$
+        additional_dependencies:
+          - ansible>=9.0.0,<10.0.0
+
   - repo: local
     hooks:
       - id: openspec-validate
