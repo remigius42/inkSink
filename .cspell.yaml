@@ -1,0 +1,42 @@
+version: "0.2"
+language: "en-US"
+words:
+  - andreas
+  - anki
+  - ankiweb
+  - coderabbit
+  - commitlint
+  - dataclass
+  - debounce
+  - eink
+  - epd
+  - esphome
+  - framebuffer
+  - gpio
+  - inksink
+  - isort
+  - kanji
+  - pisugar
+  - pillow
+  - pullup
+  - pycodestyle
+  - pyflakes
+  - pyproject
+  - pytest
+  - raspberrypi
+  - remigius
+  - rpi
+  - venv
+  - waveshare
+  - wkhtmltoimage
+ignoreWords:
+  - elif
+  - isdir
+  - startswith
+ignorePaths:
+  - .git
+  - .claude/
+  - "**/.cspell.yaml"
+dictionaries: []
+dictionaryDefinitions: []
+import: []
