@@ -9,6 +9,7 @@ words:
   - dataclass
   - debounce
   - eink
+  - fsrs
   - epd
   - esphome
   - framebuffer
