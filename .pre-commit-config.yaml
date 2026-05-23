@@ -17,7 +17,7 @@ repos:
     rev: 1.0.0
     hooks:
       - id: mdformat
-        exclude: ^\.claude/
+        exclude: ^(\.claude|\.gemini|openspec)/
         additional_dependencies:
           - mdformat-gfm
 
@@ -62,3 +62,11 @@ repos:
     hooks:
       - id: pyright
         files: \.py$
+
+  - repo: local
+    hooks:
+      - id: openspec-validate
+        name: openspec validate
+        entry: npx --yes @fission-ai/openspec validate --no-interactive --strict --all
+        language: system
+        pass_filenames: false

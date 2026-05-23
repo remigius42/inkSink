@@ -16,6 +16,8 @@ words:
   - inksink
   - isort
   - kanji
+  - openspec
+  - opsx
   - pisugar
   - pillow
   - pullup
@@ -35,7 +37,10 @@ ignoreWords:
   - startswith
 ignorePaths:
   - .git
-  - .claude/
+  - .claude/commands/opsx
+  - .claude/skills/openspec*
+  - .gemini/commands/opsx
+  - .gemini/skills/openspec*
   - "**/.cspell.yaml"
 dictionaries: []
 dictionaryDefinitions: []
