@@ -86,7 +86,7 @@ SIDE VIEW:
 ┌─────────────────────────────────┐
 │ Display (2mm) - front surface   │
 ├─────────────────────────────────┤
-│ Empty space (~20mm air gap)     │
+│ Empty space (~2mm air gap)      │
 ├───────────┬─────────────────────┤ } 26mm
 │  Battery  │  Electronics Stack  │ } uniform
 │  (6mm)    │  (22mm)             │ } depth
@@ -94,7 +94,7 @@ SIDE VIEW:
 ```
 
 **Key insight:** Display is only ~2mm thick and sits at front surface. Battery
-(6mm) and electronics (22mm) are at the back, with ~20mm of empty space in
+(6mm) and electronics (22mm) are at the back, with ~2mm of empty space in
 between. Total case depth: 26mm uniform.
 
 ### Stack Assembly (Bottom to Top)
