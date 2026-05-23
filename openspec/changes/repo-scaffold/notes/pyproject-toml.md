@@ -34,7 +34,7 @@ reportMissingModuleSource = "none"
 [project]
 name = "inksink"
 version = "0.1.0"
-requires-python = ">=3.11"  # RPi OS Bookworm ships Python 3.11
+requires-python = ">=3.13"  # RPi OS Trixie ships Python 3.13
 dependencies = [
     "Pillow",
     "requests",
@@ -60,7 +60,6 @@ where = ["src"]
 - `RPi.GPIO` and `anki` are **not** in `dependencies` — they are device-only,
   not installable on dev machines without extra work. Install via apt
   (`python3-rpi.gpio`) or pip on the device only.
-- `requires-python = ">=3.11"` matches RPi OS Bookworm. The tooling config
-  targets 3.13 (dev machine) — both are fine.
+- `requires-python = ">=3.13"` matches RPi OS Trixie and the tooling targets.
 - `[tool.setuptools.packages.find]` with `where = ["src"]` is required for
   the src layout to work with `pip install -e .`.

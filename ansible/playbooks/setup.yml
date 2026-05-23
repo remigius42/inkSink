@@ -1,0 +1,7 @@
+---
+- name: Bootstrap and configure inksink device
+  hosts: all
+  become: true
+  roles:
+    - base
+    - inksink

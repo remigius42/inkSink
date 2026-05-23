@@ -1,0 +1,58 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install OS packages
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-rpi.gpio
+      - python3-smbus
+      - python3-pillow
+      - python3-requests
+      - wkhtmltopdf
+      - ufw
+      - rsync
+    state: present
+
+- name: Set locale to en_US.UTF-8
+  community.general.locale_gen:
+    name: en_US.UTF-8
+    state: present
+
+- name: Set default locale
+  ansible.builtin.copy:
+    dest: /etc/default/locale
+    content: "LANG=en_US.UTF-8\n"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Harden SSH — disable password auth
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PasswordAuthentication"
+    line: "PasswordAuthentication no"
+    validate: "sshd -t -f %s"
+  notify: Restart sshd
+
+- name: Harden SSH — disable root login
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+    validate: "sshd -t -f %s"
+  notify: Restart sshd
+
+- name: Allow SSH through UFW
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+    policy: deny

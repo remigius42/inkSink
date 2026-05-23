@@ -25,4 +25,4 @@ Python files are formatted with **Black** and linted with **Ruff**; type-checked
 - Configuration lives in `pyproject.toml` (`[tool.black]`, `[tool.ruff]`, `[tool.pyright]`)
 - `RPi.GPIO` is hardware-only and not installed on dev machines; `reportMissingModuleSource` is
   suppressed in the Pyright config
-- Run tests via `.venv/bin/python3 -m unittest` — **no pytest**, use unittest only
+- Run tests via `pytest` from the repository root (activate `.venv` first — see `README.md`)

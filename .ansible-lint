@@ -1,0 +1,7 @@
+# ansible-lint runs from the repo root where ansible.cfg (in ansible/) is not
+# on Ansible's config search path, so roles_path = roles is never picked up.
+# mock_roles suppresses the resulting syntax-check failures; role task files
+# are still linted directly as individual YAML files.
+mock_roles:
+  - base
+  - inksink
