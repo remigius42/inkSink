@@ -6,14 +6,20 @@ words:
   - ankiweb
   - coderabbit
   - commitlint
+  - conftest
   - dataclass
   - debounce
   - eink
+  - epaper
+  - epdconfig
   - fsrs
   - epd
   - esphome
+  - firstrun
   - framebuffer
   - gpio
+  - hotfixes
+  - imager
   - inksink
   - isort
   - kanji
@@ -26,9 +32,13 @@ words:
   - pyflakes
   - pyproject
   - pytest
+  - pythonpath
   - raspberrypi
   - remigius
   - rpi
+  - setuptools
+  - smbus
+  - subpackages
   - venv
   - waveshare
   - wkhtmltoimage
