@@ -7,7 +7,7 @@ Pi OS Lite, managed entirely from a control machine via Ansible.
 
 Key constraints from ADRs and grilling session:
 
-- No Git or pip on the device — deployment uses `ansible.builtin.synchronize`
+- No Git or pip on the device — deployment uses `ansible.posix.synchronize`
   (see ADR 0001)
 - 3D case sources in OpenSCAD — plain text, version-control friendly
   (see ADR 0002)
@@ -66,8 +66,8 @@ sudden power loss. `python3-smbus` is installed via apt in the `base` role.
 `epd7in5_V2.py` and `epdconfig.py` live in `vendor/waveshare_epd/`. Each file
 carries a header comment with the source URL and commit SHA; `VENDOR.md`
 records full provenance. Ansible syncs the directory to
-`/opt/waveshare-vendor/` on the device; the systemd unit sets
-`PYTHONPATH=/opt/waveshare-vendor`.
+`/opt/waveshare-vendor/` on the device; the shell wrapper sets
+`PYTHONPATH=/opt/inksink:/opt/waveshare-vendor`.
 
 Alternatives rejected: `git clone + setup.py install` (deprecated, network
 dependency at provision time); PyPI `waveshare-epaper` (unofficial mirror,
@@ -81,8 +81,9 @@ Three secrets:
 ### Shell wrapper at `/usr/local/bin/inksink`
 
 Keeps `ExecStart` in the systemd unit clean and provides a convenient command
-for manual invocation over SSH. Deployed as a static file by the `inksink`
-Ansible role.
+for manual invocation over SSH. Deployed as a rendered template by the `inksink` Ansible role, with
+`PYTHONPATH` sourced from `inksink_dest_dir` and `inksink_vendor_dir`
+role variables.
 
 ## Risks / Trade-offs
 
@@ -90,7 +91,7 @@ Ansible role.
   must be clearly marked so future changes don't skip implementing them.
   → Mitigation: use `# TODO` markers and keep stubs minimal (no fake logic).
 
-- **`synchronize` means no on-device `git pull`**: Quick hotfixes require
+- **`ansible.posix.synchronize` means no on-device `git pull`**: Quick hotfixes require
   running a playbook. Acceptable for a personal appliance but worth noting.
   → Mitigation: `deploy.yml` is fast (rsync + service restart); document this
   in `docs/setup.md`.
@@ -100,9 +101,9 @@ Ansible role.
   → Mitigation: annotate stubs with the dimensions from the build guide so
   the next implementer has the numbers at hand.
 
-- **`synchronize` leaves files owned by root**: `ansible.posix.synchronize`
+- **`ansible.posix.synchronize` leaves files owned by root**: `ansible.posix.synchronize`
   runs as the become user (root); transferred files may not be owned by `pi`.
-  → Mitigation: follow each `synchronize` task with an `ansible.builtin.file`
+  → Mitigation: follow each `ansible.posix.synchronize` task with an `ansible.builtin.file`
   task (`recurse: true`) to enforce `pi:pi` ownership.
 
 - **`params.scad` wall thickness can be zero**: With current build-guide
