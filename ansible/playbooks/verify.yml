@@ -14,8 +14,14 @@
       loop:
         - python3
         - python3-rpi.gpio
-        - python3-smbus
+        - wkhtmltopdf
+        - fonts-noto-cjk
         - ufw
+
+    - name: Assert smbus2 is importable
+      ansible.builtin.command:
+        cmd: python3 -c "import smbus2"
+      changed_when: false
 
     - name: Assert inksink source directory exists
       ansible.builtin.stat:
@@ -34,6 +40,19 @@
     - name: Fail if config file missing
       ansible.builtin.assert:
         that: config_file.stat.exists
+
+    - name: Read config file content
+      ansible.builtin.slurp:
+        src: "{{ inksink_config_dir }}/config.yml"
+      register: config_content
+      no_log: true
+
+    - name: Fail if config missing apps.anki structure
+      ansible.builtin.assert:
+        that: >
+          (config_content.content | b64decode | from_yaml).apps.anki is defined
+        fail_msg: "config.yml missing apps.anki structure"
+      no_log: true
 
     - name: Assert shell wrapper exists
       ansible.builtin.stat:

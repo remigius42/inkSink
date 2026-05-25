@@ -30,13 +30,15 @@ jobs:
           restore-keys: pip-${{ runner.os }}-
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt -e .
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r requirements-dev.txt -e .
 
       - name: Create dummy vault password
         run: echo 'ci' > .vault-password
 
       - name: Run pre-commit
-        run: pre-commit run --all-files
+        run: .venv/bin/pre-commit run --all-files
 
       - name: Run pytest
-        run: pytest
+        run: .venv/bin/pytest

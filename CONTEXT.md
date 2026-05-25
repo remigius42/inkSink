@@ -29,8 +29,9 @@ e-ink driver. The Device is non-functional without it.
 ## Config
 
 The file `/etc/inksink/config.yml`, deployed by Ansible and owned by the `pi`
-user. All app settings are nested under `apps.<app_name>` (e.g. `apps.anki.*`).
-Hardware-level settings (e.g. `display.idle_timeout`) sit at the top level.
+user. Per-app settings nest under `apps.<app_name>` (e.g. `apps.anki.*`).
+Hardware-level settings (e.g. `display.idle_timeout`) and Core infrastructure
+settings (e.g. `renderer.cache_max_size`) use named top-level sections.
 Defaults are defined in `core/config.py` and merged at load time.
 
 ## Core

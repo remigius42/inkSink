@@ -1,1 +1,104 @@
-# TODO: Waveshare 7.5" E-Ink HAT V2+ display driver wrapper (800x480, SPI)
+"""Waveshare 7.5" V2 e-ink display driver wrapper.
+
+Manages init/sleep lifecycle, partial vs full refresh, auto-sleep via an
+idle timer, and the partial-refresh counter that triggers a full clear at
+every full_refresh_interval calls to prevent ghosting.
+"""
+
+# spellchecker:ignore getbuffer
+
+from __future__ import annotations
+
+import threading
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from PIL import Image
+
+
+class Display:
+    def __init__(
+        self, idle_timeout: int = 180, full_refresh_interval: int = 20
+    ) -> None:
+        if idle_timeout <= 0:
+            raise ValueError(f"idle_timeout must be positive, got {idle_timeout}")
+        if full_refresh_interval <= 0:
+            raise ValueError(
+                f"full_refresh_interval must be positive, got {full_refresh_interval}"
+            )
+        self._idle_timeout = idle_timeout
+        self._full_refresh_interval = full_refresh_interval
+        self._initialized = False
+        self._sleeping = False
+        self._partial_count = 0
+        self._timer: threading.Timer | None = None
+        self._lock = threading.RLock()
+        self._epd = self._make_epd()
+
+    def _make_epd(self):
+        from waveshare_epd import epd7in5_V2  # type: ignore[import-untyped]
+
+        return epd7in5_V2.EPD()
+
+    def _require_init(self) -> None:
+        if not self._initialized:
+            raise RuntimeError("Display.init() must be called before displaying images")
+
+    def _reset_timer(self) -> None:
+        with self._lock:
+            if self._timer is not None:
+                self._timer.cancel()
+            self._timer = threading.Timer(self._idle_timeout, self._on_idle)
+            self._timer.daemon = True
+            self._timer.start()
+
+    def _on_idle(self) -> None:
+        self.sleep()
+
+    def _wake_if_sleeping(self) -> None:
+        with self._lock:
+            if self._sleeping:
+                self.init()
+
+    def init(self) -> None:
+        with self._lock:
+            self._epd.init()
+            self._initialized = True
+            self._sleeping = False
+            self._reset_timer()
+
+    def display_partial(self, image: Image.Image) -> None:
+        with self._lock:
+            self._wake_if_sleeping()
+            self._require_init()
+            self._partial_count += 1
+            if self._partial_count >= self._full_refresh_interval:
+                self._partial_count = 0
+                self._epd.display(self._epd.getbuffer(image))
+            else:
+                self._epd.display_Partial(self._epd.getbuffer(image))
+            self._reset_timer()
+
+    def display_full(self, image: Image.Image) -> None:
+        with self._lock:
+            self._wake_if_sleeping()
+            self._require_init()
+            self._partial_count = 0
+            self._epd.display(self._epd.getbuffer(image))
+            self._reset_timer()
+
+    def display_4gray(self, image: Image.Image) -> None:
+        with self._lock:
+            self._wake_if_sleeping()
+            self._require_init()
+            self._epd.display_4Gray(self._epd.getbuffer_4Gray(image))
+            self._reset_timer()
+
+    def sleep(self) -> None:
+        with self._lock:
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+            self._epd.sleep()
+            self._sleeping = True
+            self._initialized = False

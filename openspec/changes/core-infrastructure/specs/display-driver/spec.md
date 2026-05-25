@@ -3,12 +3,14 @@
 ### Requirement: Display initializes before use
 
 `display.py` SHALL provide an `init()` call that initializes the Waveshare
-7.5" V2 HAT via SPI before any image is written. Calling `display()` or
-`display_partial()` without prior `init()` SHALL raise `RuntimeError`.
+7.5" V2 HAT via SPI before any image is written. Calling `display_partial()`,
+`display_full()`, or `display_4gray()` without prior `init()` SHALL raise
+`RuntimeError`.
 
 #### Scenario: Init required before display
 
-- **WHEN** `display_partial(image)` is called without a prior `init()`
+- **WHEN** `display_partial(image)`, `display_full(image)`, or `display_4gray(image)`
+  is called without a prior `init()`
 - **THEN** `RuntimeError` is raised with a message indicating init is required
 
 ### Requirement: Partial refresh for card transitions
@@ -33,7 +35,17 @@ Only available on screens sold after Oct 2023.
 - **WHEN** `display_4gray(image)` is called with a valid 800×480 PIL `"L"` image
 - **THEN** the display performs a full refresh cycle rendering four gray levels
 
+#### Scenario: 4-gray refresh does not affect the partial-refresh counter
+
+- **WHEN** `display_4gray(image)` is called with a non-zero partial-refresh count
+- **THEN** `_partial_count` is unchanged
+
 ### Requirement: Full refresh to clear ghosting
+
+The partial-refresh counter SHALL only be incremented by `display_partial()`
+calls. `display_4gray()` SHALL leave the counter unchanged because every
+4-gray call is already a full refresh — the counter is meaningless in that
+mode.
 
 The display SHALL support full refresh (`display_full(image)`) that performs
 a complete clear-and-draw cycle. Full refresh SHALL be called automatically

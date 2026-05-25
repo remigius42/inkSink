@@ -4,8 +4,9 @@ version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
     "Pillow",
+    "PyYAML>=6.0,<7.0",
     "requests",
-    "smbus2",
+    "smbus2>=0.6.1,<0.7",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +37,6 @@ select = ["E", "F", "W", "I"]  # pycodestyle, pyflakes, isort
 
 [tool.pyright]
 pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
 typeCheckingMode = "standard"
-# RPi.GPIO is hardware-only and not installed on dev machines
-reportMissingModuleSource = "none"

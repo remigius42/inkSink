@@ -1,4 +1,4 @@
-<!-- spellchecker:ignore gpiozero imgkit iwconfig -->
+<!-- spellchecker:ignore entrancy gettempdir gpiozero imgkit iwconfig shutil -->
 
 ## Notes
 
@@ -69,7 +69,8 @@ caller.
 
 `Display` manages sleep automatically via a `threading.Timer`. Every call to
 `display_partial()` or `display_full()` cancels any pending timer and starts a
-new one. When the timer fires, `sleep()` is called and `_sleeping` is set.
+new one. `init()` also arms the timer so an idle display sleeps even if no
+display call follows. When the timer fires, `sleep()` is called and `_sleeping` is set.
 The next display call transparently calls `init()` first if `_sleeping` is
 True — the caller never needs to manage this.
 
@@ -77,6 +78,21 @@ True — the caller never needs to manage this.
 public for the initial startup call only.
 
 Idle timeout defaults to 180 seconds; configurable in `config.yml`.
+
+### Display thread safety: RLock on all state-mutating paths
+
+`threading.Timer` fires `_on_idle()` → `sleep()` from a background thread
+while display methods run on the main thread. Without a lock the timer and
+the main thread can race on `_timer`, `_initialized`, and `_sleeping`.
+
+`Display` holds a `threading.RLock` acquired in `_reset_timer`, `sleep`,
+`_wake_if_sleeping`, `init`, and all `display_*` bodies. `RLock` (not `Lock`)
+is used because `_wake_if_sleeping` calls `init` while already holding the
+lock in `display_*` methods, and `_reset_timer` itself acquires the lock.
+`_reset_timer()` is called from inside each method's `with self._lock:` block
+(rather than after releasing it) to eliminate the race window where a timer
+callback could fire between state mutation and timer reset, leaving the display
+sleeping with a new live timer.
 
 Alternative: auto-sleep after every display call. Rejected — `init()` runs
 the full power-on sequence; paying that cost on every card transition would
@@ -103,9 +119,19 @@ correctly. Pure-Python HTML renderers (e.g. `html2image`, `imgkit`) either
 lack CJK font support or are wrappers around the same binary. The build guide
 confirms this approach.
 
-Rendered PNGs are written to `/tmp/` and converted to the target bit depth
-by Pillow. Optional card cache keyed by content hash avoids re-rendering
-unchanged cards.
+Rendered PNGs are written to `tempfile.gettempdir()` (resolves to `/tmp/` on
+Linux) rather than a hardcoded `/tmp/` path, for portability across test
+environments. The `subprocess.run` call uses a 30-second timeout and
+`shutil.which` to resolve the binary before invoking it — a missing binary
+raises `RuntimeError` immediately rather than a cryptic `FileNotFoundError`.
+
+Card renders are cached in-memory keyed by `(sha256(html), mode)`. The cache
+is an `OrderedDict`-backed LRU bounded to `renderer.cache_max_size` entries
+(default 100, configurable in `config.yml`). At 48 KB per 1-bit image and
+375 KB per 4-gray image, 100 entries costs 5–37 MB — within the 512 MB RAM
+budget. Cache entries are stored and returned as copies (`image.copy()`) so
+callers cannot mutate cached objects. `configure(max_size)` replaces the
+cache instance; the App layer calls it at startup with the value from config.
 
 ### Display mode: both 1-bit and 4-gray supported; App chooses via config
 
@@ -135,6 +161,16 @@ alongside other App settings such as `apps.anki.display_mode`.
 Splitting into per-App config files is YAGNI — one `config.yml` with `apps:`
 nesting is sufficient.
 
+`load_settings()` validates that `yaml.safe_load()` returned a dict before
+merging; a non-dict YAML root (list, scalar, empty file, or `null`) raises
+`ValueError` with a message identifying the file path. A file with a wrong
+root type — including an empty file that produces `None` — is almost certainly
+corruption or a write-path bug; silent fallback to defaults would hide it.
+The `FileNotFoundError` path (no file yet, first-time setup) is the only
+legitimate "use defaults" case. `save_settings()` uses
+`yaml.safe_dump()` rather than `yaml.dump()` to avoid emitting
+Python-specific tags.
+
 Alternative: SQLite for settings. Rejected — overkill for a handful of scalar
 values.
 
@@ -143,8 +179,10 @@ values.
 `core/state.py` provides on-demand hardware reads. No session state lives
 here; session tracking belongs to each App.
 
-`battery_percent() -> int` reads from PiSugar 3 over I2C (address 0x57).
-Returns -1 when I2C is unavailable (dev machine).
+`battery_percent() -> int` reads from PiSugar 3 over I2C (address 0x57)
+using `smbus2` as a context manager (`with smbus2.SMBus(1) as bus:`) so the
+file descriptor is closed on every exit path. Returns -1 when I2C is
+unavailable (dev machine).
 
 `wifi_status() -> WifiStatus` shells out to `nmcli -t -f active,ssid,signal
 dev wifi` and parses the active row. `WifiStatus` is a dataclass with
@@ -152,6 +190,10 @@ dev wifi` and parses the active row. `WifiStatus` is a dataclass with
 connected, -1 when disconnected or `nmcli` unavailable). Using `nmcli` rather
 than `iwconfig` gives structured, parseable output without screen-scraping
 and is the standard interface on NetworkManager-managed Pi OS Lite.
+
+nmcli terse output escapes `:` in SSID values as `\:`. The parser splits on
+the first `:` (active field) and last `:` (signal field) rather than naive
+`split(":")`, then unescapes `\:` → `:` and `\\` → `\` in the SSID.
 
 ## Risks / Trade-offs
 
@@ -162,11 +204,16 @@ and is the standard interface on NetworkManager-managed Pi OS Lite.
 
 - **RPi.GPIO not available on dev machines**: Importing it at module level
   breaks tests on non-Pi hosts.
-  → Mitigation: lazy import with a `HardwareNotAvailable` fallback; pyright
-  config already sets `reportMissingModuleSource = "none"`.
+  → Mitigation: lazy import with a `HardwareNotAvailable` fallback; the
+  RPi.GPIO import carries a targeted `# type: ignore[reportMissingModuleSource]`
+  comment so Pyright is silenced only for that import.
 
 - **PiSugar I2C address conflicts**: PiSugar 3 uses I2C address 0x57.
   Waveshare HAT does not use I2C, so no conflict.
 
 - **wkhtmltoimage security**: renders local HTML only (written to `/tmp/`
   by the renderer itself). No user-supplied URLs are passed.
+
+- **Renderer cache size**: bounded to 100 entries by default (LRU eviction via
+  `OrderedDict`). Configurable as `renderer.cache_max_size` in `config.yml`.
+  Worst-case memory at 100 × 375 KB (4-gray) ≈ 37 MB — within the RAM budget.
