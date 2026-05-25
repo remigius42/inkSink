@@ -1,2 +1,9 @@
-ankiweb_username: {{ ankiweb_username | to_json }}
-ankiweb_password: {{ ankiweb_password | to_json }}
+display:
+  idle_timeout: 180
+
+apps:
+  anki:
+    ankiweb_username: {{ ankiweb_username | to_json }}
+    ankiweb_password: {{ ankiweb_password | to_json }}
+    display_mode: "1bit"
+    full_refresh_interval: 20

@@ -21,3 +21,8 @@ Apps read their own subtree via `load_settings()["apps"][app_name]`.
 
 - **WHEN** `save_settings({"apps": {"anki": {"refresh_interval": 15}}})` is called followed by `load_settings()`
 - **THEN** `load_settings()` returns a dict containing `{"apps": {"anki": {"refresh_interval": 15}}}`
+
+#### Scenario: Non-dict YAML content raises ValueError
+
+- **WHEN** `load_settings()` is called and `config.yml` contains a YAML list, scalar, or empty/null root (not a mapping)
+- **THEN** `ValueError` is raised with a message identifying the file path

@@ -39,12 +39,19 @@ A button press SHALL only be registered if the pin reads LOW for at least
 ### Requirement: `wait_for_action()` blocks until a button is pressed
 
 `input.py` SHALL provide a `wait_for_action()` function that blocks and
-returns the action name of the first button press detected.
+returns the action name of the first button press detected. `setup()` MUST
+be called before `wait_for_action()`; calling `wait_for_action()` without
+a prior `setup()` SHALL raise `RuntimeError`.
 
 #### Scenario: Returns action name on press
 
 - **WHEN** the `good` button (GPIO 19) is pressed cleanly
 - **THEN** `wait_for_action()` returns `"good"`
+
+#### Scenario: Raises if setup not called
+
+- **WHEN** `wait_for_action()` is called without a prior `setup()`
+- **THEN** `RuntimeError` is raised
 
 ### Requirement: GPIO uses internal pull-ups
 

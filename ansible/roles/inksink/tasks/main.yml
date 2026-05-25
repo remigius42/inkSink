@@ -75,6 +75,12 @@
     - Reload systemd
     - Restart inksink
 
+- name: Install smbus2 Python dependency
+  ansible.builtin.pip:
+    name: "smbus2>=0.6.1,<0.7"
+    state: present
+    extra_args: --break-system-packages
+
 - name: Enable and start inksink service
   ansible.builtin.systemd:
     name: "{{ inksink_service }}"

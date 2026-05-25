@@ -1,3 +1,5 @@
+<!-- spellchecker:ignore gettempdir shutil -->
+
 ## ADDED Requirements
 
 ### Requirement: HTML is rendered to an 800×480 PIL image in the requested mode
@@ -33,7 +35,10 @@ characters in Anki card HTML display without tofu (missing glyph boxes).
 
 Calling `render(html, mode)` with identical HTML and mode SHALL return the
 cached image without re-invoking `wkhtmltoimage`. The cache key SHALL be
-`(sha256(html), mode)`. The cache SHALL be in-memory (not persisted to disk).
+`(sha256(html), mode)`. The cache SHALL be in-memory (not persisted to disk),
+bounded to `renderer.cache_max_size` entries (default 100), with
+least-recently-used eviction. `configure(max_size)` replaces the cache with a
+fresh instance of the given size.
 
 #### Scenario: Repeated render skips wkhtmltoimage
 
@@ -45,11 +50,22 @@ cached image without re-invoking `wkhtmltoimage`. The cache key SHALL be
 - **WHEN** `render(html, "1bit")` is called followed by `render(html, "4gray")`
 - **THEN** `wkhtmltoimage` is invoked twice and each call returns the correct mode
 
-### Requirement: Intermediate files are written to `/tmp/`
+#### Scenario: LRU eviction removes least-recently-used entry
 
-The renderer SHALL write the temporary HTML and PNG files to `/tmp/` and
-clean them up after each render. Files SHALL NOT be left on disk between
-renders.
+- **WHEN** the cache is full and a new entry is rendered
+- **THEN** the least-recently-used entry is evicted; a recently accessed entry
+  survives even if it was inserted earlier
+
+#### Scenario: configure() resets the cache
+
+- **WHEN** `configure(max_size)` is called
+- **THEN** the existing cache is cleared and the new size limit is enforced
+
+### Requirement: Intermediate files are written to the system temp directory
+
+The renderer SHALL write the temporary HTML and PNG files to
+`tempfile.gettempdir()` (resolves to `/tmp/` on Linux) and clean them up
+after each render. Files SHALL NOT be left on disk between renders.
 
 #### Scenario: No leftover files after render
 
@@ -59,4 +75,15 @@ renders.
 #### Scenario: Cleanup on render failure
 
 - **WHEN** `render(html)` fails due to `wkhtmltoimage` error or image loading error
-- **THEN** no `.html` or `.png` files from the failed render remain in `/tmp/`
+- **THEN** no `.html` or `.png` files from the failed render remain in the temp directory
+
+### Requirement: `wkhtmltoimage` must be present on PATH
+
+The renderer SHALL verify that `wkhtmltoimage` is available via `shutil.which`
+before invoking it. If the binary is absent, `RuntimeError` SHALL be raised
+immediately with a message identifying the missing binary.
+
+#### Scenario: Missing binary raises RuntimeError
+
+- **WHEN** `render(html)` is called and `wkhtmltoimage` is not found on PATH
+- **THEN** `RuntimeError` is raised with a message containing `"wkhtmltoimage"`

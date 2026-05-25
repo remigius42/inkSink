@@ -10,10 +10,10 @@
       - python3
       - python3-pip
       - python3-rpi.gpio
-      - python3-smbus
       - python3-pillow
       - python3-requests
       - wkhtmltopdf
+      - fonts-noto-cjk
       - ufw
       - rsync
     state: present

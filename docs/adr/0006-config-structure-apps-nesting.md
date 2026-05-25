@@ -41,6 +41,9 @@ Use a single `/etc/inksink/config.yml` with this structure:
 display:
   idle_timeout: 180
 
+renderer:
+  cache_max_size: 100
+
 apps:
   anki:
     ankiweb_username: "..."
@@ -65,3 +68,9 @@ writes only explicit values — `DEFAULTS` is not persisted.
   handles the initial migration from the flat repo-scaffold layout)
 - Per-App config files remain an option if isolation needs grow, but are not
   needed now
+- `load_settings()` raises `ValueError` when the YAML root is not a mapping
+  (list, scalar, or `null`) — a missing file returns defaults, but a
+  structurally wrong file is treated as a fault worth surfacing
+- Core infrastructure settings that are neither hardware nor per-App (e.g.
+  `renderer.cache_max_size`) get their own named top-level section rather than
+  being forced under `display.*` or `apps.*`

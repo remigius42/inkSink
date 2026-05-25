@@ -39,3 +39,9 @@ when `nmcli` is unavailable.
 - **WHEN** `wifi_status()` is called on a machine without `nmcli`
 - **THEN** `connected` is `False`, `ssid` is `None`, `strength` is `-1`, and
   no exception is raised
+
+#### Scenario: SSID containing a colon is returned correctly
+
+- **WHEN** `wifi_status()` is called and the active SSID contains a literal `:`
+  (escaped as `\:` in nmcli terse output)
+- **THEN** `ssid` contains the unescaped network name with the colon intact
