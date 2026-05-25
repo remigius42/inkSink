@@ -1,4 +1,4 @@
-<!-- spellchecker:ignore ankiweb noto paperwhite pnas wkhtmltoimage -->
+<!-- spellchecker:ignore ankiweb boox noto paperwhite pnas wkhtmltoimage -->
 
 # [inkSink](https://github.com/remigius42/inkSink)
 
@@ -31,6 +31,24 @@ RSS feeds    ─┘
 - Multi-day battery life (5-7 hours active, days for typical usage)
 - Fast e-ink refresh (0.4s partial refresh)
 - Portable and lightweight (170mm × 115mm × 26mm, 140g)
+
+## Alternatives
+
+If building from scratch isn't for you, these off-the-shelf devices support custom software:
+
+| Device | Price | Key advantage | Anki |
+| -- | -- | -- | -- |
+| [Onyx BOOX](https://www.boox.com/) | $250–820 | Android 15 — install Anki from Play Store directly | Native app |
+| [PineNote](https://pine64.org/devices/pinenote/) | $399 | Ships Debian Trixie (community image); SSH root access | Custom client |
+| [reMarkable Paper](https://remarkable.com/) | €399–649 | SSH root enabled by default; Vellum package manager (Toltec deprecated) | Via Vellum |
+| [Kobo](https://www.kobo.com/) + [KOReader](https://github.com/koreader/koreader) | $160–260 | No jailbreak needed; cheapest hackable option | Limited |
+
+**Why build inkSink instead?**
+
+- Full Linux control — no Android abstractions, no rough Debian beta (PineNote)
+- Cheaper than all of the above
+- Full GPIO access for custom button layout (all commercial devices are sealed)
+- Custom 7.5" display size; commercial devices are 6–10" fixed form factors
 
 ## Hardware
 
