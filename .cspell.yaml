@@ -8,6 +8,7 @@ words:
   - commitlint
   - conftest
   - dataclass
+  - datasheet
   - debounce
   - eink
   - epaper
@@ -18,12 +19,16 @@ words:
   - firstrun
   - framebuffer
   - gpio
+  - grayscale
+  - hashlib
   - hotfixes
   - imager
   - inksink
   - isort
   - jetson
   - kanji
+  - nmcli
+  - noto
   - openspec
   - opsx
   - pisugar
