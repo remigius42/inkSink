@@ -136,11 +136,14 @@ Display is ~2mm at the front, electronics stack ~22mm at the back, with a
 ## Development
 
 See [docs/development.md](docs/development.md) for local setup, running tests, linting,
-and the OpenSpec change workflow.
+and the OpenSpec change workflow. Architectural decisions are recorded in
+[docs/adr/](docs/adr/).
 
 ## Build Guide
 
 Detailed build instructions: [docs/anki-eink-device-build-guide.md](docs/anki-eink-device-build-guide.md)
+
+Full bill of materials: [hardware/bom.md](hardware/bom.md)
 
 **Quick overview:**
 
