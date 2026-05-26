@@ -17,14 +17,23 @@ progress tracker within an Anki Session).
 ## App
 
 A self-contained mode of operation running on the Device. Each App owns its
-own Python subpackage under `src/inksink/`. The first App is `anki`; future
-Apps include `ebooks` and `pdf`.
+own Python subpackage under `src/inksink/`. The Launcher is the first App to
+run on boot; content Apps (`anki`, `ebooks`, `pdf`) are launched from it.
 
 ## Base role
 
 The Ansible role that brings a freshly flashed Pi to a usable state: OS
 packages, locale/timezone, WiFi, SSH hardening, firewall, and the Waveshare
 e-ink driver. The Device is non-functional without it.
+
+## Button
+
+One of 8 physical momentary switches (`btn_1`–`btn_8`) arranged in a 4×2
+grid on the short (bottom) edge of the Device in portrait orientation. Buttons
+carry no physical labels — each App state declares what each button does and
+what label to show on screen. `btn_1` (top-left) is "Menu" by
+convention, always returning to the Launcher. The PiSugar 3 hardware button
+handles power-on/off separately and is not a Button in this sense.
 
 ## Config
 
@@ -37,15 +46,25 @@ Defaults are defined in `core/config.py` and merged at load time.
 ## Core
 
 Shared infrastructure used by all Apps: display driver wrapper, GPIO input
-handler, HTML-to-image renderer, config (settings load/save), and hardware
-state (battery, WiFi). Lives in `src/inksink/core/`. Session state belongs to
-each App, not Core.
+handler, orientation-aware HTML-to-image renderer, Jinja2 layout system,
+config (settings load/save), and hardware state (battery, WiFi). Lives in
+`src/inksink/core/`. Session state belongs to each App, not Core.
 
 ## Deploy
 
 The act of syncing `src/inksink/` from the control machine to `/opt/inksink/`
 on the Device via Ansible's `synchronize` module, followed by a service
 restart. Does not involve `git` or `pip` on the Device.
+
+## Device
+
+The physical appliance: Raspberry Pi Zero 2W + Waveshare 7.5" e-ink HAT
+(800×480 px) + PiSugar 3 battery, housed in a 3D-printed case. Used in
+portrait orientation by default (effective 480×800 px); landscape orientation
+is supported per App. Controlled by 8 physical Buttons on the short (bottom)
+edge. Physical rotation angle is configurable in Config
+(`display.portrait_rotation`, `display.landscape_rotation`) to account for
+case-assembly variation.
 
 ## Display mode
 
@@ -55,8 +74,16 @@ to fast card-flipping. `"4gray"` uses full refresh (~3-4s, four gray levels)
 suited to image-heavy content. Only meaningful on V2 screens sold after Oct
 2023\. `full_refresh_interval` is ignored in `"4gray"` mode.
 
-## Device
+## Launcher
 
-The physical appliance: Raspberry Pi Zero 2W + Waveshare 7.5" e-ink HAT +
-PiSugar 3 battery, housed in a 3D-printed case. A single-purpose, standalone
-unit controlled by physical buttons.
+The App that runs on Device boot. Lets the user select a content App, view
+device status (battery, WiFi), and adjust basic settings. Acts as the parent
+of all content Apps; `btn_1` ("Menu") in any App returns to the Launcher.
+
+## Layout
+
+An HTML Jinja2 template that defines the screen structure for a rendered App
+state. Two built-in layouts: `fullscreen` (one content slot, App has total
+control) and `default` (content slot + button label bar; status bar with time,
+WiFi, and battery is auto-populated by Core). Apps may define their own
+layouts.

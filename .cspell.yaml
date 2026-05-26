@@ -45,6 +45,7 @@ words:
   - rpi
   - setuptools
   - smbus
+  - softkey
   - subpackages
   - trixie
   - venv
