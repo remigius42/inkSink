@@ -11,12 +11,14 @@ import time
 from typing import Any
 
 _DEFAULT_PIN_MAP: dict[int, str] = {
-    4: "power",
-    12: "show_answer",
-    13: "again",
-    16: "hard",
-    19: "good",
-    26: "easy",
+    4: "btn_1",
+    12: "btn_2",
+    13: "btn_3",
+    16: "btn_4",
+    19: "btn_5",
+    22: "btn_6",
+    26: "btn_7",
+    27: "btn_8",
 }
 
 _DEBOUNCE_S = 0.05

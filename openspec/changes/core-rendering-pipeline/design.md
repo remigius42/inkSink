@@ -23,7 +23,7 @@ state, re-implement status bar logic, and manage button label composition
 themselves.
 
 The device needs portrait-first Apps (Anki, ebooks) at 480×800 and landscape
-Apps (Launcher, future). Rotation is a hardware-assembly concern: which edge
+Apps (future). Rotation is a hardware-assembly concern: which edge
 faces up depends on how the Pi + HAT stack is mounted in the 3D-printed case.
 Apps should work in logical pixels; `Display` should resolve physical rotation
 from Config.
@@ -58,10 +58,10 @@ this at the Core layer.
 
 ### Orientation expressed as a StrEnum; Core owns the dimension mapping
 
-`render()` accepts `orientation: Orientation` where `Orientation` is a
-`StrEnum` (`class Orientation(str, enum.Enum)`) with `PORTRAIT = "portrait"`
-and `LANDSCAPE = "landscape"`. Because it inherits from `str`, enum values
-compare equal to their string equivalents — config strings convert cleanly via
+`render()` accepts `orientation: Orientation` where `Orientation` is
+`class Orientation(enum.StrEnum)` with `PORTRAIT = "portrait"` and
+`LANDSCAPE = "landscape"`. Because it inherits from `str`, enum values compare
+equal to their string equivalents — config strings convert cleanly via
 `Orientation(settings["apps"]["<name>"]["orientation"])` with no extra mapping.
 Core resolves orientation to pixel dimensions internally via `_ORIENTATION_DIMS`
 keyed by `Orientation` members.
@@ -75,8 +75,8 @@ forces every call site to repeat `width=480, height=800`; no runtime or
 static validation of valid combinations.
 
 Alternative: plain `str` with `Literal["portrait", "landscape"]`. Rejected —
-`StrEnum` gives the same static type safety plus runtime validation and IDE
-autocomplete at no extra friction thanks to the `str` inheritance.
+`enum.StrEnum` gives the same static type safety plus runtime validation and
+IDE autocomplete at no extra friction thanks to the `str` inheritance.
 
 ### Rotation angle config-driven, not computed from orientation alone
 
@@ -87,6 +87,19 @@ counterclockwise), passed directly to `Image.rotate(angle, expand=True)`.
 `display.portrait_rotation` (default 90) and
 `display.landscape_rotation` (default 0) let an integrator correct for
 assembly without code changes.
+
+### Renderer cache wired via `configure_from_settings`
+
+`renderer.cache_max_size` in Config DEFAULTS is applied by calling
+`renderer.configure_from_settings(settings)` at application startup. This keeps
+the renderer stateless with respect to config — it does not read config itself,
+and startup code is responsible for calling `configure_from_settings` after
+`load_settings()`. Until called, the renderer uses its hardcoded default of 100.
+
+`core/startup.py` owns the startup sequence: `startup(settings)` is the single
+call site that applies all config-driven Core defaults. `__main__.py` calls
+`startup(load_settings())` at boot. New subsystems that need config wiring add
+their call inside `startup()`.
 
 ### `core/layout.py` exposes named functions, not a generic fill
 

@@ -2,7 +2,8 @@
 
 Manages init/sleep lifecycle, partial vs full refresh, auto-sleep via an
 idle timer, and the partial-refresh counter that triggers a full clear at
-every full_refresh_interval calls to prevent ghosting.
+every full_refresh_interval calls to prevent ghosting. Rotates images before
+driver handoff using config-driven angles.
 """
 
 # spellchecker:ignore getbuffer
@@ -15,19 +16,48 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from PIL import Image
 
+_PANEL_W: int = 800
+_PANEL_H: int = 480
+
+_VALID_ROTATIONS: frozenset[int] = frozenset({0, 90, 180, 270})
+
 
 class Display:
     def __init__(
-        self, idle_timeout: int = 180, full_refresh_interval: int = 20
+        self,
+        idle_timeout: int = 180,
+        full_refresh_interval: int = 20,
+        portrait_rotation: int = 90,
+        landscape_rotation: int = 0,
     ) -> None:
+        """Initialise the display wrapper.
+
+        portrait_rotation and landscape_rotation are degrees CCW (PIL convention)
+        applied before driver handoff when the image is portrait- or
+        landscape-sized respectively. Only cardinal angles {0, 90, 180, 270} are
+        accepted — non-cardinal values with expand=True produce non-integer
+        intermediate dimensions that corrupt the 800x480 driver buffer.
+        """
         if idle_timeout <= 0:
             raise ValueError(f"idle_timeout must be positive, got {idle_timeout}")
         if full_refresh_interval <= 0:
             raise ValueError(
                 f"full_refresh_interval must be positive, got {full_refresh_interval}"
             )
+        if portrait_rotation not in _VALID_ROTATIONS:
+            raise ValueError(
+                f"portrait_rotation must be one of {sorted(_VALID_ROTATIONS)}, "
+                f"got {portrait_rotation}"
+            )
+        if landscape_rotation not in _VALID_ROTATIONS:
+            raise ValueError(
+                f"landscape_rotation must be one of {sorted(_VALID_ROTATIONS)}, "
+                f"got {landscape_rotation}"
+            )
         self._idle_timeout = idle_timeout
         self._full_refresh_interval = full_refresh_interval
+        self._portrait_rotation = portrait_rotation
+        self._landscape_rotation = landscape_rotation
         self._initialized = False
         self._sleeping = False
         self._partial_count = 0
@@ -60,6 +90,21 @@ class Display:
             if self._sleeping:
                 self.init()
 
+    def _rotate(self, image: Image.Image) -> Image.Image:
+        """Rotate image to match the 800x480 driver buffer.
+
+        expand=True is required: without it PIL keeps the canvas at the original
+        dimensions after rotation, silently producing a wrong-sized buffer.
+        """
+        angle = (
+            self._portrait_rotation
+            if image.height > image.width
+            else self._landscape_rotation
+        )
+        if angle == 0:
+            return image
+        return image.rotate(angle, expand=True)
+
     def init(self) -> None:
         with self._lock:
             self._epd.init()
@@ -71,6 +116,7 @@ class Display:
         with self._lock:
             self._wake_if_sleeping()
             self._require_init()
+            image = self._rotate(image)
             self._partial_count += 1
             if self._partial_count >= self._full_refresh_interval:
                 self._partial_count = 0
@@ -83,6 +129,7 @@ class Display:
         with self._lock:
             self._wake_if_sleeping()
             self._require_init()
+            image = self._rotate(image)
             self._partial_count = 0
             self._epd.display(self._epd.getbuffer(image))
             self._reset_timer()
@@ -91,6 +138,7 @@ class Display:
         with self._lock:
             self._wake_if_sleeping()
             self._require_init()
+            image = self._rotate(image)
             self._epd.display_4Gray(self._epd.getbuffer_4Gray(image))
             self._reset_timer()
 

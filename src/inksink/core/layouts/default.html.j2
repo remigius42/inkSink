@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<!-- spellchecker:ignore nowrap -->
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('/usr/share/fonts/noto/NotoSans-Regular.ttf');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Noto Sans', 'Noto Sans CJK JP', sans-serif;
+      font-size: 14px;
+    }
+    .status-bar {
+      width: 100vw;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      border-bottom: 1px solid #ccc;
+      font-size: 12px;
+    }
+    .content {
+      width: 100vw;
+      height: calc(100vh - 104px);
+      overflow: hidden;
+    }
+    .button-bar {
+      width: 100vw;
+      height: 80px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 40px);
+      border-top: 1px solid #ccc;
+    }
+    .button-bar button {
+      height: 40px;
+      border: 1px solid #ccc;
+      background: white;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="status-bar">
+    <span class="time">{{ time }}</span>
+    <span class="wifi">{% if wifi_connected %}{{ ssid }}{% else %}No WiFi{% endif %}</span>
+    <span class="battery">{{ battery }}%</span>
+  </div>
+  <div class="content">{{ content | safe }}</div>
+  <div class="button-bar">
+    <button>{{ buttons[0] }}</button>
+    <button>{{ buttons[1] }}</button>
+    <button>{{ buttons[2] }}</button>
+    <button>{{ buttons[3] }}</button>
+    <button>{{ buttons[4] }}</button>
+    <button>{{ buttons[5] }}</button>
+    <button>{{ buttons[6] }}</button>
+    <button>{{ buttons[7] }}</button>
+  </div>
+</body>
+</html>
