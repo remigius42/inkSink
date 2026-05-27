@@ -10,13 +10,21 @@ import copy
 import yaml
 
 DEFAULTS: dict = {
-    "display": {"idle_timeout": 180},
+    "display": {
+        "idle_timeout": 180,
+        "portrait_rotation": 90,
+        "landscape_rotation": 0,
+    },
     "renderer": {"cache_max_size": 100},
     "apps": {
         "anki": {
             "display_mode": "1bit",
             "full_refresh_interval": 20,
-        }
+            "orientation": "portrait",
+        },
+        "launcher": {
+            "orientation": "portrait",
+        },
     },
 }
 

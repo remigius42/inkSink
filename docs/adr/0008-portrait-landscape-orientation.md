@@ -27,55 +27,68 @@ switching: one code path, renderer always targets 480×800, Display always
 rotates before driver handoff. Breaks any future App that genuinely wants
 landscape (e.g. a media viewer or a wide data dashboard).
 
-**Per-App orientation; rotation at the display boundary.** The renderer
-accepts explicit pixel dimensions (`width`, `height`) and produces an image
-of exactly that size. `Display` detects orientation from image dimensions and
-rotates before calling the driver. Apps that want landscape pass 800×480; Apps
-that want portrait pass 480×800. The driver always sees the correct 800×480
-buffer.
+**Per-App orientation via a named string; rotation at the display boundary.**
+The renderer accepts an `orientation` string (`"portrait"` or `"landscape"`)
+and resolves pixel dimensions internally. The display has exactly two valid
+logical sizes — portrait (480×800) or landscape (800×480) — so raw integer
+dimensions at every call site are unnecessary indirection on a fixed-display
+device. `Display` detects orientation from image dimensions and rotates before
+calling the driver. The driver always sees the correct 800×480 buffer.
 
 The rotation angle is a hardware-assembly concern, not a software design
 concern — it depends on which edge of the panel faces up after mounting in the
-case. Templates and Apps always work in logical pixels; `Display` resolves the
-physical rotation from Config.
+case. Templates use CSS viewport units (`100vw`/`100vh`) and are
+orientation-agnostic; `Display` resolves the physical rotation from Config.
 
 ## Decision
 
-Orientation is a per-App (or per-render) concern. `renderer.render()` accepts
-`width` and `height` parameters instead of hardcoded 800×480 values. Apps
-select orientation by choosing the dimensions they pass to the renderer;
-templates are designed in logical pixels at those dimensions with no awareness
-of physical rotation.
+Orientation is a per-App concern expressed via `Orientation`, a `StrEnum`
+(`class Orientation(enum.StrEnum)`) with `PORTRAIT = "portrait"` and
+`LANDSCAPE = "landscape"` defined in `core/renderer.py`. Each App declares
+its orientation via `apps.<name>.orientation` in `core/config.py` DEFAULTS
+(stored as a plain string; converted at the call site via
+`Orientation(settings[...])`). `renderer.render()` accepts
+`orientation: Orientation` instead of raw `width`/`height`; Core owns the
+mapping derived from `_PANEL_W = 800` and `_PANEL_H = 480` constants:
+`{Orientation.PORTRAIT: (_PANEL_H, _PANEL_W), Orientation.LANDSCAPE: (_PANEL_W, _PANEL_H)}`.
+
+Layout templates (`fill_fullscreen`, `fill_default`) use CSS viewport units
+and require no orientation argument — they produce correct HTML regardless of
+orientation; wkhtmltoimage sizes the viewport from the resolved dimensions.
 
 `Display` reads two config keys at init to determine how to rotate before
 driver handoff:
 
-- `display.portrait_rotation` — degrees CW applied when the image is
-  portrait-sized (height > width). Default: `90`.
-- `display.landscape_rotation` — degrees CW applied when the image is
+- `display.portrait_rotation` — degrees CCW (PIL `Image.rotate()` convention)
+  applied when the image is portrait-sized (height > width). Default: `90`.
+- `display.landscape_rotation` — degrees CCW applied when the image is
   landscape-sized (width ≥ height). Default: `0`.
 
 Defaults match the most common mounting orientation and keep a fresh deploy
 functional without explicit config. Physical rotation values must be verified
 on first assembly or after case reassembly.
 
-The default orientation for the Anki App and future reading Apps is portrait
-(480×800). The Launcher may use landscape or portrait depending on its layout.
+Default orientation: `"portrait"` for all current Apps (Launcher, Anki).
+The device is a hand-held portrait reading device; no App should require the
+user to physically rotate it. Future Apps that genuinely need landscape (e.g.
+a wide data dashboard) may override via their own `apps.<name>.orientation`
+config key.
 
 ## Consequences
 
-- `renderer.render()` signature changes: `width` and `height` replace the
+- `renderer.render()` signature changes: `orientation: Orientation` replaces the
   implicit 800×480 assumption; existing callers must be updated
-- The renderer's HTML template body width must be parameterized; it is
-  currently hardcoded to `760px` and must adapt to the caller-specified width
-- `Display.display_partial()` and `display_full()` gain a rotation step —
-  a PIL `Image.rotate(angle, expand=True)` call — using the config-driven
-  angle for the detected orientation; `expand=True` ensures the buffer
-  dimensions are always correct for the driver
-- `core/config.py` gains defaults `display.portrait_rotation: 90` and
-  `display.landscape_rotation: 0`; `config.yml` should document them
-  explicitly so builders know to check on reassembly
-- wkhtmltoimage is called with the App-specified dimensions; the `--width`
-  and `--height` flags are no longer hardcoded
-- `renderer.py` must extend the LRU cache key to include dimensions alongside
-  the HTML hash and display mode to avoid cache collisions across orientations
+- Layout templates use `100vw`/`100vh` viewport units — no pixel variables
+  injected; the renderer's internal `_HTML_TEMPLATE` wrapper is removed
+- `Display.display_partial()`, `display_full()`, and `display_4gray()` each
+  gain a rotation step — a PIL `Image.rotate(angle, expand=True)` call —
+  using the config-driven angle for the detected orientation; `expand=True`
+  ensures the buffer dimensions are always correct for the driver
+- `core/config.py` gains defaults `display.portrait_rotation: 90`,
+  `display.landscape_rotation: 0`, and `apps.<name>.orientation: "portrait"`
+  per App; `config.yml` should document rotation values so builders know to
+  check on reassembly
+- wkhtmltoimage `--width`/`--height` are set from the resolved orientation
+  dimensions, no longer hardcoded
+- LRU cache key: `(sha256(html), mode, orientation)` — replaces the former
+  `(sha256, mode)` to avoid cache collisions across orientations

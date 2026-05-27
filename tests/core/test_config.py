@@ -43,3 +43,14 @@ def test_save_uses_safe_dump(tmp_path):
     save_settings({"key": "value"}, path=path)
     content = (tmp_path / "config.yml").read_text()
     assert "!!" not in content  # no Python-specific YAML tags
+
+
+def test_defaults_include_rotation_config():
+    result = load_settings(path="/nonexistent/path/config.yml")
+    assert result["display"]["portrait_rotation"] == 90
+    assert result["display"]["landscape_rotation"] == 0
+
+
+def test_defaults_include_launcher_orientation():
+    result = load_settings(path="/nonexistent/path/config.yml")
+    assert result["apps"]["launcher"]["orientation"] == "portrait"

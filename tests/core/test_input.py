@@ -30,15 +30,42 @@ def test_raises_on_empty_pin_map():
         InputHandler(pin_map={})
 
 
-def test_default_mapping_show_answer_is_pin_12():
+def test_default_mapping_pin_12_is_btn_2():
     h = InputHandler()
-    assert h._pin_map[12] == "show_answer"
+    assert h._pin_map[12] == "btn_2"
 
 
-def test_default_mapping_has_all_six_buttons():
+def test_default_mapping_has_all_eight_generic_buttons():
     h = InputHandler()
-    actions = set(h._pin_map.values())
-    assert actions == {"power", "show_answer", "again", "hard", "good", "easy"}
+    assert set(h._pin_map.values()) == {
+        "btn_1",
+        "btn_2",
+        "btn_3",
+        "btn_4",
+        "btn_5",
+        "btn_6",
+        "btn_7",
+        "btn_8",
+    }
+
+
+def test_default_mapping_power_not_a_value():
+    h = InputHandler()
+    assert "power" not in h._pin_map.values()
+
+
+def test_default_mapping_gpio_assignments():
+    h = InputHandler()
+    assert h._pin_map == {
+        4: "btn_1",
+        12: "btn_2",
+        13: "btn_3",
+        16: "btn_4",
+        19: "btn_5",
+        22: "btn_6",
+        26: "btn_7",
+        27: "btn_8",
+    }
 
 
 def test_wait_for_action_raises_if_setup_not_called():
@@ -69,6 +96,19 @@ def test_bounce_shorter_than_debounce_is_ignored(mocker):
 
     # The action should NOT have returned on the bounce
     # (if it had, wait_for_action would have returned before StopIteration)
+
+
+def test_wait_for_action_returns_btn5_for_gpio19(mocker):
+    gpio = MagicMock()
+    gpio.input.side_effect = [0, 0]  # LOW on poll, LOW after debounce → clean press
+
+    h = InputHandler(pin_map={19: "btn_5"})
+    h._gpio = gpio
+    h.setup()
+
+    mocker.patch("inksink.core.input.time.sleep")
+    result = h.wait_for_action()
+    assert result == "btn_5"
 
 
 def test_clean_press_returns_action(mocker):

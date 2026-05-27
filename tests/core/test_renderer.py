@@ -43,21 +43,54 @@ def wkhtmltoimage_on_path():
         yield
 
 
-def test_render_1bit_returns_800x480_mode_1():
-    from inksink.core.renderer import render
+def test_render_1bit_landscape_returns_800x480_mode_1():
+    from inksink.core.renderer import Orientation, render
 
-    with patch("subprocess.run", side_effect=_stub_wkhtmltoimage(_make_png_bytes())):
-        img = render("<p>hello</p>", mode="1bit")
+    with patch(
+        "subprocess.run",
+        side_effect=_stub_wkhtmltoimage(_make_png_bytes(800, 480)),
+    ):
+        img = render("<p>hello</p>", mode="1bit", orientation=Orientation.LANDSCAPE)
     assert img.size == (800, 480)
     assert img.mode == "1"
 
 
-def test_render_html_with_curly_braces():
+def test_render_1bit_portrait_returns_480x800_mode_1():
+    from inksink.core.renderer import Orientation, render
+
+    with patch(
+        "subprocess.run",
+        side_effect=_stub_wkhtmltoimage(_make_png_bytes(480, 800)),
+    ):
+        img = render("<p>hello</p>", mode="1bit", orientation=Orientation.PORTRAIT)
+    assert img.size == (480, 800)
+    assert img.mode == "1"
+
+
+def test_render_default_orientation_is_portrait():
     from inksink.core.renderer import render
 
-    with patch("subprocess.run", side_effect=_stub_wkhtmltoimage(_make_png_bytes())):
-        img = render("<style>.x{color:red;}</style>", mode="1bit")
-    assert img.size == (800, 480)
+    with patch(
+        "subprocess.run",
+        side_effect=_stub_wkhtmltoimage(_make_png_bytes(480, 800)),
+    ):
+        img = render("<p>hello</p>", mode="1bit")
+    assert img.size == (480, 800)
+
+
+def test_render_html_with_curly_braces():
+    from inksink.core.renderer import Orientation, render
+
+    with patch(
+        "subprocess.run",
+        side_effect=_stub_wkhtmltoimage(_make_png_bytes(480, 800)),
+    ):
+        img = render(
+            "<style>.x{color:red;}</style>",
+            mode="1bit",
+            orientation=Orientation.PORTRAIT,
+        )
+    assert img.size == (480, 800)
     assert img.mode == "1"
 
 
@@ -77,17 +110,50 @@ def _make_png_bytes_all_gray_bands(width: int = 800, height: int = 480) -> bytes
     return buf.getvalue()
 
 
-def test_render_4gray_returns_800x480_mode_l_with_four_values():
-    from inksink.core.renderer import render
+def test_render_4gray_landscape_returns_800x480_mode_l_with_four_values():
+    from inksink.core.renderer import Orientation, render
 
     with patch(
         "subprocess.run",
         side_effect=_stub_wkhtmltoimage(_make_png_bytes_all_gray_bands()),
     ):
-        img = render("<p>hello</p>", mode="4gray")
+        img = render("<p>hello</p>", mode="4gray", orientation=Orientation.LANDSCAPE)
     assert img.size == (800, 480)
     assert img.mode == "L"
     assert set(img.tobytes()) == {0, 85, 170, 255}
+
+
+def test_render_4gray_portrait_returns_480x800_mode_l_with_four_values():
+    from inksink.core.renderer import Orientation, render
+
+    with patch(
+        "subprocess.run",
+        side_effect=_stub_wkhtmltoimage(_make_png_bytes_all_gray_bands(480, 800)),
+    ):
+        img = render("<p>hello</p>", mode="4gray", orientation=Orientation.PORTRAIT)
+    assert img.size == (480, 800)
+    assert img.mode == "L"
+    assert set(img.tobytes()) == {0, 85, 170, 255}
+
+
+def test_render_different_orientations_bypass_cache():
+    from inksink.core.renderer import Orientation, render
+
+    stub = MagicMock(
+        side_effect=lambda cmd, **_: (
+            Path(cmd[-1]).write_bytes(_make_png_bytes(480, 800))
+            or MagicMock(returncode=0)
+            if "--width" in cmd and cmd[cmd.index("--width") + 1] == "480"
+            else Path(cmd[-1]).write_bytes(_make_png_bytes(800, 480))
+            or MagicMock(returncode=0)
+        )
+    )
+    with patch("subprocess.run", stub):
+        img_p = render("<p>hi</p>", mode="1bit", orientation=Orientation.PORTRAIT)
+        img_l = render("<p>hi</p>", mode="1bit", orientation=Orientation.LANDSCAPE)
+    assert stub.call_count == 2
+    assert img_p.size == (480, 800)
+    assert img_l.size == (800, 480)
 
 
 def test_render_subprocess_restricts_local_file_access():
@@ -224,6 +290,21 @@ def test_lru_access_promotes_entry_past_eviction():
     assert stub.call_count == 3  # a, b, c (second a was a cache hit)
     with patch("subprocess.run", stub):
         renderer.render("<p>b</p>", mode="1bit")  # must re-render
+    assert stub.call_count == 4
+
+
+def test_configure_from_settings_applies_cache_max_size():
+    from inksink.core import renderer
+
+    renderer.configure_from_settings({"renderer": {"cache_max_size": 2}})
+    stub = MagicMock(side_effect=_stub_wkhtmltoimage(_make_png_bytes()))
+    with patch("subprocess.run", stub):
+        renderer.render("<p>a</p>", mode="1bit")
+        renderer.render("<p>b</p>", mode="1bit")
+        renderer.render("<p>c</p>", mode="1bit")  # evicts <p>a</p>
+
+    with patch("subprocess.run", stub):
+        renderer.render("<p>a</p>", mode="1bit")  # must re-render
     assert stub.call_count == 4
 
 
