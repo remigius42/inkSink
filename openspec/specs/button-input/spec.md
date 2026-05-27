@@ -1,70 +1,68 @@
+<!-- spellchecker:ignore mosi pinout raspi sclk -->
+
 ## Purpose
 
-GPIO button input handler for the six tactile buttons on the device HAT.
-Maps BCM pin numbers to named actions, debounces presses, and provides a
-blocking `wait_for_action()` call for use by App logic.
+GPIO button input handler for the eight tactile buttons on the device HAT.
+Maps BCM pin numbers to generic positional IDs, and provides a blocking
+`wait_for_action()` call for use by App logic.
 
 ## Requirements
 
-### Requirement: Buttons are mapped to named actions
+### Requirement: Buttons are mapped to generic positional IDs
 
-`input.py` SHALL define a mapping from GPIO BCM pin numbers to action names.
-Default mapping (from build guide):
+`input.py` SHALL rename `_DEFAULT_PIN_MAP` to use generic positional IDs
+`btn_1`–`btn_8` instead of Anki-specific action names. The `power` entry SHALL
+be removed — PiSugar owns hardware power-on/off via its own button. Updated
+default mapping (8 buttons, 4×2 grid on bottom edge):
 
-| Action        | GPIO |
-| ------------- | ---- |
-| `power`       | 4    |
-| `show_answer` | 12   |
-| `again`       | 13   |
-| `hard`        | 16   |
-| `good`        | 19   |
-| `easy`        | 26   |
+| ID      | GPIO | Physical pin |
+| ------- | ---- | ------------ |
+| `btn_1` | 4    | 7            |
+| `btn_2` | 12   | 32           |
+| `btn_3` | 13   | 33           |
+| `btn_4` | 16   | 36           |
+| `btn_5` | 19   | 35           |
+| `btn_6` | 22   | 15           |
+| `btn_7` | 26   | 37           |
+| `btn_8` | 27   | 13           |
 
-The mapping SHALL be overridable via `config.yml`.
+Pin selection rationale (see <https://pinout.xyz> for the full Pi Zero 2 W
+pinout):
 
-#### Scenario: Default mapping is applied
+- GPIO 17 was originally proposed for btn_5 but conflicts with the Waveshare
+  HAT RST line; GPIO 22 (physical pin 15) is a clean general-purpose pin with
+  no alt-function conflict on this assembly.
+- Waveshare 7.5" V2 HAT occupies: GPIO 8 (CS/CE0), 10 (MOSI), 11 (SCLK),
+  17 (RST), 24 (BUSY), 25 (DC).
+- PiSugar 3 uses I2C: GPIO 2 (SDA) and GPIO 3 (SCL).
+- All eight button pins are free of the above assignments. Verify on first
+  assembly with a multimeter or `raspi-gpio get <pin>` before soldering.
+
+The mapping SHALL remain overridable via `config.yml` (`input.pin_map`).
+
+#### Scenario: Default mapping uses generic IDs
 
 - **WHEN** `InputHandler` is instantiated without a custom mapping
-- **THEN** GPIO pin 12 maps to the action `show_answer`
+- **THEN** GPIO pin 12 maps to the action `btn_2`
 
-### Requirement: Button presses are debounced
+#### Scenario: power action is not present in default mapping
 
-A button press SHALL only be registered if the pin reads LOW for at least
-50ms continuously. Bounces shorter than 50ms SHALL be ignored.
+- **WHEN** `InputHandler` is instantiated without a custom mapping
+- **THEN** `"power"` is not a value in the active pin map
 
-#### Scenario: Bounce is ignored
+### Requirement: `wait_for_action()` returns a generic button ID
 
-- **WHEN** a GPIO pin reads LOW for 20ms then returns HIGH
-- **THEN** no action is registered
+`wait_for_action()` SHALL return one of `btn_1`–`btn_8`. Callers are
+responsible for mapping IDs to semantic actions (e.g. Anki App maps `btn_5` to
+"Again"). The return value SHALL be the action string value from the active
+`_pin_map` (`dict[int, str]`), not the GPIO pin number key.
 
-#### Scenario: Clean press is registered
+#### Scenario: Returns generic ID on press
 
-- **WHEN** a GPIO pin reads LOW for 60ms
-- **THEN** exactly one action event is registered
-
-### Requirement: `wait_for_action()` blocks until a button is pressed
-
-`input.py` SHALL provide a `wait_for_action()` function that blocks and
-returns the action name of the first button press detected. `setup()` MUST
-be called before `wait_for_action()`; calling `wait_for_action()` without
-a prior `setup()` SHALL raise `RuntimeError`.
-
-#### Scenario: Returns action name on press
-
-- **WHEN** the `good` button (GPIO 19) is pressed cleanly
-- **THEN** `wait_for_action()` returns `"good"`
+- **WHEN** the button wired to GPIO 19 is pressed cleanly
+- **THEN** `wait_for_action()` returns `"btn_5"`
 
 #### Scenario: Raises if setup not called
 
 - **WHEN** `wait_for_action()` is called without a prior `setup()`
 - **THEN** `RuntimeError` is raised
-
-### Requirement: GPIO uses internal pull-ups
-
-All button pins SHALL be configured with `GPIO.PUD_UP` (active-low). No
-external resistors are required.
-
-#### Scenario: Pin configured with pull-up
-
-- **WHEN** `InputHandler.setup()` is called
-- **THEN** each button pin is set to `GPIO.IN` with `GPIO.PUD_UP`
