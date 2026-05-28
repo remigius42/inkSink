@@ -142,6 +142,11 @@ class Display:
             self._epd.display_4Gray(self._epd.getbuffer_4Gray(image))
             self._reset_timer()
 
+    def set_full_refresh_interval(self, n: int) -> None:
+        if n <= 0:
+            raise ValueError(f"full_refresh_interval must be positive, got {n}")
+        self._full_refresh_interval = n
+
     def sleep(self) -> None:
         with self._lock:
             if self._timer is not None:

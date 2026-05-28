@@ -72,3 +72,16 @@
           - (inksink_service + '.service') in ansible_facts.services
           - ansible_facts.services[inksink_service + '.service'].state == 'running'
           - ansible_facts.services[inksink_service + '.service'].status == 'enabled'
+
+    - name: Read systemd service unit file
+      ansible.builtin.slurp:
+        src: "/etc/systemd/system/{{ inksink_service }}.service"
+      register: service_unit
+
+    - name: Fail if INKSINK_VERSION not set in service unit
+      ansible.builtin.assert:
+        that: >
+          (service_unit.content | b64decode) is search('Environment=INKSINK_VERSION=\S+')
+        fail_msg: >
+          INKSINK_VERSION is not set or empty in the systemd service unit;
+          required by version_info() on the Status screen

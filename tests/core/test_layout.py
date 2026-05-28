@@ -6,6 +6,8 @@ from unittest.mock import patch
 import jinja2
 import pytest
 
+from inksink.core.layout import fill_error
+
 
 def test_fill_fullscreen_returns_complete_html():
     from inksink.core.layout import fill_fullscreen
@@ -98,3 +100,21 @@ def test_app_layout_independent_of_core(tmp_path):
     assert app_result == "APP:hello"
     with pytest.raises(jinja2.TemplateNotFound):
         core_layout._ENV.get_template("custom.html.j2")
+
+
+def test_fill_error_returns_html_with_message():
+    result = fill_error("disk full")
+    assert "disk full" in result
+    assert "Press any button to continue" in result
+
+
+def test_fill_error_no_status_bar():
+    result = fill_error("oops")
+    assert "status-bar" not in result
+    assert "button-bar" not in result
+
+
+def test_fill_error_escapes_html_in_message():
+    result = fill_error("<script>alert('xss')</script>")
+    assert "<script>" not in result
+    assert "&lt;script&gt;" in result
