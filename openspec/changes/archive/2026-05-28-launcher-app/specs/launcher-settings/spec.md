@@ -11,13 +11,14 @@ canonical flattening:
 - Lists produce zero-based bracket-indexed keys (e.g. `parent.list[0].item`).
 - The final flattened keys SHALL be sorted lexicographically (Unicode code point
   order) before rendering.
-- Scalar values are preserved as-is, except that any key whose name contains
-  `password` or `secret` (case-insensitive) SHALL have its value replaced with
-  `***` in the output.
+- Scalar values are preserved as-is, except that any key whose full flattened
+  name contains `password` or `secret` (case-insensitive substring match on the
+  entire key string, e.g. `apps.anki.ankiweb_password` is masked but
+  `passwords_enabled` is also masked) SHALL have its value replaced with `***`
+  in the output.
 
-Credential values (keys containing `password` or `secret`, case-insensitive)
-SHALL be masked as `***`. `btn_1` SHALL be labeled "Menu" and SHALL return to
-MENU. No editing is possible in v1.
+`btn_1` SHALL be labeled "Menu" and SHALL return to MENU. No editing is possible
+in v1.
 
 #### Scenario: Settings screen shows config keys
 
@@ -45,12 +46,25 @@ the content fits on one screen.
 
 - **WHEN** the settings list is longer than the visible area and `btn_6` is
   pressed in SETTINGS state
-- **THEN** the display re-renders with the content shifted down by 5 lines
+- **THEN** the viewport advances down by 5 lines (visible content moves up,
+  revealing the next items below)
 
 #### Scenario: Offset clamps at bottom
 
 - **WHEN** the user presses `btn_6` (scroll down) and the bottom of the list
   is already visible
+- **THEN** the offset does not change and no re-render occurs
+
+#### Scenario: Scrolling up reveals earlier keys
+
+- **WHEN** the offset is greater than 0 and `btn_7` is pressed in SETTINGS state
+- **THEN** the viewport moves up by 5 lines (visible content moves down,
+  revealing the previous items above)
+
+#### Scenario: Offset clamps at top
+
+- **WHEN** the user presses `btn_7` (scroll up) and the top of the list is
+  already visible (offset is 0)
 - **THEN** the offset does not change and no re-render occurs
 
 #### Scenario: Scroll indicators shown

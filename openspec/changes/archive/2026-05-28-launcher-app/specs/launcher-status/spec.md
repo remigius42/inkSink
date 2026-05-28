@@ -10,14 +10,16 @@ order:
 2. Battery percent (from PiSugar I2C; `-1` shown as "unavailable")
 3. WiFi SSID and signal quality (or "Offline" if disconnected)
 4. Hostname (`socket.gethostname()`)
-5. IP address (outbound interface IP; see notes/pi-ip-lookup.md)
+5. IP address (outbound interface IP; see notes/pi-ip-lookup.md; shown as
+   "unavailable" when lookup fails or returns a loopback address)
 6. Bluetooth state — "off" if disabled; "on" with connected device list if
    enabled (friendly name, fallback to MAC address; empty list shown as "no
    devices connected")
 7. System load — 1m / 5m / 15m averages (`os.getloadavg()`; shown as
    "unavailable" on non-Linux hosts)
-8. Memory — total MB / free MB (`/proc/meminfo` `MemAvailable`; shown as
-   "unavailable" if unreadable)
+8. Memory — `MemTotal` MB / `MemAvailable` MB (from `/proc/meminfo`; note:
+   `MemAvailable` is used for "free", not `MemFree`; shown as "unavailable" if
+   either key is absent or the file is unreadable)
 9. Storage — total GB / free GB (root `/` via `shutil.disk_usage`)
 10. Tag version (`INKSINK_VERSION` env var; fallback `"unknown"`)
 
