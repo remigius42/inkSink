@@ -36,8 +36,9 @@ If a content App's `run()` raises an unhandled exception, `__main__.py` SHALL ca
 ### Requirement: btn_8 in MENU sleeps the display
 
 In MENU state, `btn_8` SHALL be labeled "Sleep" and SHALL call
-`display.sleep()`. The Launcher SHALL then block until any button is pressed,
-then call `display.init()` and re-render MENU.
+`display.sleep()`, then return immediately. The next Launcher cycle's
+`display_full()` call triggers `_wake_if_sleeping()` automatically — no
+explicit `display.init()` or button-wait inside Launcher.
 
 #### Scenario: Sleep and wake cycle
 

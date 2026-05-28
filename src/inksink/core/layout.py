@@ -2,13 +2,14 @@
 
 """Jinja2-based layout filling functions for Core display layouts.
 
-Provides fill_fullscreen() and fill_default() which return complete HTML
-documents ready for renderer.render(). Core automatically injects status bar
-data (time, WiFi, battery) — callers do not provide these.
+Provides fill_fullscreen(), fill_default(), and fill_error() which return
+complete HTML documents ready for renderer.render(). Core automatically
+injects status bar data (time, WiFi, battery) — callers do not provide these.
 """
 
 from __future__ import annotations
 
+import html as _html
 from datetime import datetime
 from pathlib import Path
 
@@ -27,6 +28,21 @@ def fill_fullscreen(content: str) -> str:
     """Return a complete HTML document with content filling the full viewport."""
     tmpl = _ENV.get_template("fullscreen.html.j2")
     return tmpl.render(content=content)
+
+
+def fill_error(message: str) -> str:
+    """Return a fullscreen HTML document showing an error message.
+
+    No status bar or button bar — callers must wait_for_action() separately.
+    """
+    safe_message = _html.escape(message)
+    content = (
+        f'<div style="padding:40px;font-family:monospace;font-size:18px;">'
+        f"<p>{safe_message}</p>"
+        f"<p>Press any button to continue…</p>"
+        f"</div>"
+    )
+    return fill_fullscreen(content)
 
 
 def fill_default(content: str, buttons: list[str]) -> str:

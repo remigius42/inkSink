@@ -76,9 +76,11 @@ suited to image-heavy content. Only meaningful on V2 screens sold after Oct
 
 ## Launcher
 
-The App that runs on Device boot. Lets the user select a content App, view
-device status (battery, WiFi), and adjust basic settings. Acts as the parent
-of all content Apps; `btn_1` ("Menu") in any App returns to the Launcher.
+The App that runs on Device boot (`__main__.py` → systemd). Single-pass:
+renders MENU, handles one user selection (App launch / Status / Settings /
+Logs / Sleep), then returns; `__main__.py` restarts it in a loop. Acts as
+the parent of all content Apps; `btn_1` ("Menu") in any App returns to the
+Launcher. Implemented in `src/inksink/launcher/app.py`.
 
 ## Layout
 
@@ -87,3 +89,11 @@ state. Two built-in layouts: `fullscreen` (one content slot, App has total
 control) and `default` (content slot + button label bar; status bar with time,
 WiFi, and battery is auto-populated by Core). Apps may define their own
 layouts.
+
+## Status Screen
+
+A Launcher screen (reached via `btn_5` in MENU) that displays live device
+diagnostics: time, battery, WiFi SSID + signal, hostname, IP address,
+Bluetooth state + connected devices, system load averages, memory, storage,
+and deployed tag version (`INKSINK_VERSION` env var). Read-only; `btn_1`
+returns to MENU. Does not scroll in v1.

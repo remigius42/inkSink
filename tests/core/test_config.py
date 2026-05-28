@@ -54,3 +54,8 @@ def test_defaults_include_rotation_config():
 def test_defaults_include_launcher_orientation():
     result = load_settings(path="/nonexistent/path/config.yml")
     assert result["apps"]["launcher"]["orientation"] == "portrait"
+
+
+def test_defaults_include_display_full_refresh_interval():
+    result = load_settings(path="/nonexistent/path/config.yml")
+    assert result["display"]["full_refresh_interval"] == 20

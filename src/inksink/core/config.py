@@ -14,6 +14,7 @@ DEFAULTS: dict = {
         "idle_timeout": 180,
         "portrait_rotation": 90,
         "landscape_rotation": 0,
+        "full_refresh_interval": 20,
     },
     "renderer": {"cache_max_size": 100},
     "apps": {

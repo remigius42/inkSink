@@ -225,3 +225,21 @@ def test_init_blocks_while_lock_is_held():
 
     t.join(timeout=1.0)
     assert init_completed.is_set()
+
+
+def test_set_full_refresh_interval_updates_value():
+    d = _make_display(idle_timeout=60)
+    d.set_full_refresh_interval(10)
+    assert d._full_refresh_interval == 10
+
+
+def test_set_full_refresh_interval_rejects_zero():
+    d = _make_display(idle_timeout=60)
+    with pytest.raises(ValueError, match="full_refresh_interval"):
+        d.set_full_refresh_interval(0)
+
+
+def test_set_full_refresh_interval_rejects_negative():
+    d = _make_display(idle_timeout=60)
+    with pytest.raises(ValueError, match="full_refresh_interval"):
+        d.set_full_refresh_interval(-5)
