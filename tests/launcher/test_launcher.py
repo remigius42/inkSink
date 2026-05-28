@@ -403,6 +403,43 @@ def test_logs_content_shows_journalctl_output():
     assert "line2" in content
 
 
+def test_apps_list_contains_anki_label():
+    from inksink.launcher.app import APPS
+
+    labels = [label for label, _ in APPS]
+    assert "Anki" in labels
+
+
+def test_btn2_calls_run_anki_with_display_input_settings():
+    """Launcher passes (display, input_handler, settings) to the app callable.
+
+    Does NOT patch APPS — verifies the real APPS→run_anki binding is called
+    with the right arguments by patching run_anki at its source module.
+    """
+    display = _make_display()
+    input_handler = _make_input(["btn_2"])
+    settings = _settings()
+    fake_image = Image.new("1", (480, 800))
+    received: list = []
+
+    def capture(*args, **kwargs):
+        received.append((args, kwargs))
+
+    with (
+        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
+        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.load_settings", return_value=settings),
+        patch("inksink.anki.app.run_anki", capture),
+    ):
+        Launcher(display, input_handler, settings).run()
+
+    assert len(received) == 1
+    args, _ = received[0]
+    assert args[0] is display
+    assert args[1] is input_handler
+    assert args[2] is settings
+
+
 def test_run_app_exception_propagates():
     display = _make_display()
     input_handler = _make_input(["btn_2"])

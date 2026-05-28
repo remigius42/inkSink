@@ -59,3 +59,11 @@ def test_defaults_include_launcher_orientation():
 def test_defaults_include_display_full_refresh_interval():
     result = load_settings(path="/nonexistent/path/config.yml")
     assert result["display"]["full_refresh_interval"] == 20
+
+
+def test_defaults_include_anki_credential_keys():
+    anki = DEFAULTS["apps"]["anki"]
+    assert "ankiweb_username" in anki
+    assert "ankiweb_password" in anki
+    assert anki["ankiweb_username"] == ""
+    assert anki["ankiweb_password"] == ""

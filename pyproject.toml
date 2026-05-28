@@ -8,6 +8,7 @@ dependencies = [
     "Jinja2>=3.0",
     "requests",
     "smbus2>=0.6.1,<0.7",
+    "anki==25.9.4",
 ]
 
 [project.optional-dependencies]

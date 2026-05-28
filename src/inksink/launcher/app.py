@@ -11,6 +11,7 @@ import html
 import subprocess
 from typing import Callable
 
+import inksink.anki.app as _anki_app
 from inksink.core import renderer
 from inksink.core.config import load_settings
 from inksink.core.layout import fill_default
@@ -30,12 +31,8 @@ _VISIBLE_LINES = 34
 _LINE_HEIGHT_PX = 20
 
 
-def _anki_stub() -> None:
-    raise NotImplementedError("anki-app not yet implemented")
-
-
 APPS: list[tuple[str, Callable]] = [
-    ("Anki", _anki_stub),
+    ("Anki", lambda d, i, s: _anki_app.run_anki(d, i, s)),
 ]
 
 
@@ -259,12 +256,13 @@ class Launcher:
         self._render_menu()
         action = self._input_handler.wait_for_action()
 
+        settings = load_settings()
         if action == "btn_2" and len(APPS) > 0:
-            APPS[0][1]()
+            APPS[0][1](self._display, self._input_handler, settings)
         elif action == "btn_3" and len(APPS) > 1:
-            APPS[1][1]()
+            APPS[1][1](self._display, self._input_handler, settings)
         elif action == "btn_4" and len(APPS) > 2:
-            APPS[2][1]()
+            APPS[2][1](self._display, self._input_handler, settings)
         elif action == "btn_5":
             self._render_status()
         elif action == "btn_6":

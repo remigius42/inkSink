@@ -52,11 +52,19 @@ On 64-bit aarch64 (Pi OS Trixie), the official PyPI wheel installs without
 compilation.
 
 ```python
-col = Collection("/var/lib/inksink/collection.anki2")
-cards = col.find_cards("is:due")
-card  = col.get_card(card_id)
-note  = col.get_note(card.nid)      # card HTML lives in note fields
-col.sched.answer_card(card, rating) # 1=Again 2=Hard 3=Good 4=Easy; writes revlog
+from anki.scheduler_pb2 import CardAnswer
+
+col     = Collection("/var/lib/inksink/collection.anki2")
+sched   = col.sched                                # runtime: v3.Scheduler
+queued  = sched.get_queued_cards(fetch_limit=9999) # QueuedCards with .cards list
+entry   = queued.cards[0]                          # has .card (proto) and .states
+card    = col.get_card(entry.card.id)              # rich Card; has .question()/.answer()
+card.start_timer()                                 # must be called before rendering question
+html_q  = card.question()                          # complete HTML including <style>
+html_a  = card.answer()
+
+answer  = sched.build_answer(card=card, states=entry.states, rating=CardAnswer.GOOD)
+sched.answer_card(answer)                          # AGAIN=0 HARD=1 GOOD=2 EASY=3
 ```
 
 This eliminates DIY SQLite parsing of `cards`/`notes`/`revlog` and the
@@ -92,7 +100,7 @@ public per-card review endpoint; the sync protocol operates on collections.
 
 ### Offline behavior: Collection file persists reviews; sync merges on next session
 
-`col.sched.answer_card()` writes reviews directly to the local
+`sched.answer_card()` writes reviews directly to the local
 `/var/lib/inksink/collection.anki2` SQLite file. If WiFi is unavailable,
 `sync_collection()` is skipped; the reviews remain durably in the Collection.
 On the next online session, `sync_collection()` at SYNCING state merges local
@@ -148,7 +156,7 @@ progress string. This closes the open question from the initial design.
 
 - **`anki` package API stability**: The `anki` PyPI package API is not
   formally versioned independently of Anki desktop. A major release could
-  rename `find_cards()`, `sched.answer_card()`, or the sync API.
+  rename `get_queued_cards()`, `build_answer()`, `answer_card()`, or the sync API.
   → Mitigation: pin `anki` version in `pyproject.toml`; test on hardware
   after each Anki desktop release before updating the pin.
 

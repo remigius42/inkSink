@@ -22,8 +22,11 @@ toolchain or cross-compilation.
 
 The `anki` package provides via its Rust backend (no Qt/aqt required):
 
-- `Collection` object model — `find_cards()`, `get_card()`, `get_note()`
-- FSRS scheduler built in since Anki 23.10 — `col.sched.answer_card(card, rating)`
+- `Collection` object model — `get_queued_cards()`, `get_card()` (rich Card
+  with `.question()` / `.answer()` HTML); `get_note()` not needed
+- FSRS scheduler built in since Anki 23.10 — `sched.build_answer(card, states, rating)` + `sched.answer_card(answer)`; ratings:
+  `CardAnswer.AGAIN=0`, `HARD=1`, `GOOD=2`, `EASY=3`;
+  `card.start_timer()` must be called before rendering the question
 - AnkiWeb sync — `col.sync_login()` + `col.sync_collection()`
 
 ## Decision
