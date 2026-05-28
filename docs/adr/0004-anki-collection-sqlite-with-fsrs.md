@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR 0011](./0011-anki-package-aarch64.md)
 
 ## Context
 

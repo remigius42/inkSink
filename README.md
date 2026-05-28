@@ -127,11 +127,11 @@ Display is ~2mm at the front, electronics stack ~22mm at the back, with a
 | Component | Usage |
 | -- | -- |
 | Raspberry Pi OS Lite | ~80 MB |
-| Python + libraries | ~40 MB |
+| Python + `anki` Rust backend | ~120 MB (needs measurement) |
 | HTML renderer (active) | ~30 MB |
 | Application logic | ~10 MB |
-| **Total** | **~160 MB** |
-| Available (of 512 MB) | ~350 MB |
+| **Total** | **~240 MB** |
+| Available (of 512 MB) | ~270 MB |
 
 ## Development
 
