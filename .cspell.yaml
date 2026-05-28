@@ -4,6 +4,7 @@ words:
   - andreas
   - anki
   - ankiweb
+  - bluetoothctl
   - coderabbit
   - commitlint
   - conftest
@@ -18,6 +19,8 @@ words:
   - esphome
   - firstrun
   - framebuffer
+  - gethostname
+  - getloadavg
   - gpio
   - grayscale
   - hashlib
@@ -26,6 +29,7 @@ words:
   - inksink
   - isort
   - jetson
+  - journalctl
   - kanji
   - nmcli
   - noto
@@ -51,10 +55,12 @@ words:
   - venv
   - waveshare
   - wkhtmltoimage
+  - wlan
 ignoreWords:
   - elif
   - isdir
   - lineinfile
+  - shutil
   - startswith
 ignorePaths:
   - .git
