@@ -18,3 +18,8 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+rules:
+  tasks:
+    - Include tasks to update the docs if affected
+    - Include a task to update ansible/playbooks/verify.yml if affected
+    - Include a task to run the pre-commit hooks and fix issues at the end
