@@ -13,9 +13,9 @@
 
 ### Build guide references
 
-- Software setup checklist → [`docs/anki-eink-device-build-guide.md#software-setup`](../../../docs/anki-eink-device-build-guide.md)
-- Testing & validation → [`docs/anki-eink-device-build-guide.md#testing--validation`](../../../docs/anki-eink-device-build-guide.md)
-- Troubleshooting (display, software) → [`docs/anki-eink-device-build-guide.md#troubleshooting`](../../../docs/anki-eink-device-build-guide.md)
+- Software setup checklist → [`docs/archive/anki-eink-device-build-guide.md#software-setup`](../../../docs/archive/anki-eink-device-build-guide.md)
+- Testing & validation → [`docs/archive/anki-eink-device-build-guide.md#testing--validation`](../../../docs/archive/anki-eink-device-build-guide.md)
+- Troubleshooting (display, software) → [`docs/archive/anki-eink-device-build-guide.md#troubleshooting`](../../../docs/archive/anki-eink-device-build-guide.md)
 
 ## Context
 

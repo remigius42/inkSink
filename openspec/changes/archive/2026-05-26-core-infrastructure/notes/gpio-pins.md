@@ -8,12 +8,11 @@ From the build guide. These are the recommended BCM pin numbers.
 
 | Signal | GPIO (BCM) | Notes |
 | -- | -- | -- |
-| CE0 | 8 | |
-| MISO | 9 | |
+| CE0/CS | 8 | |
 | MOSI | 10 | |
 | SCLK | 11 | |
 | RST | 17 | |
-| PWR | 18 | Power enable; added in recent HATs |
+| PWR | 18 | Power enable (GPIO_PWR_PIN in epdconfig.py) |
 | BUSY | 24 | |
 | DC | 25 | |
 

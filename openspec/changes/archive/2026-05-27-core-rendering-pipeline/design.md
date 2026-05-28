@@ -12,7 +12,7 @@
 
 ### Build guide references
 
-- Renderer architecture → [`docs/anki-eink-device-build-guide.md#software`](../../../docs/anki-eink-device-build-guide.md)
+- Renderer architecture → [`docs/archive/anki-eink-device-build-guide.md#software`](../../../docs/archive/anki-eink-device-build-guide.md)
 
 ## Context
 

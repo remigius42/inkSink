@@ -4,8 +4,8 @@
 
 **Build guide references:**
 
-- BOM table → [`docs/anki-eink-device-build-guide.md#core-electronics`](../../../docs/anki-eink-device-build-guide.md)
-- Where to buy (CH/EU) → [`docs/anki-eink-device-build-guide.md#where-to-buy-switzerlandeu`](../../../docs/anki-eink-device-build-guide.md)
+- BOM table → [`docs/archive/anki-eink-device-build-guide.md#core-electronics`](../../../docs/archive/anki-eink-device-build-guide.md)
+- Where to buy (CH/EU) → [`docs/archive/anki-eink-device-build-guide.md#where-to-buy-switzerlandeu`](../../../docs/archive/anki-eink-device-build-guide.md)
 
 ## Current state (tooling only, no `[project]` section)
 

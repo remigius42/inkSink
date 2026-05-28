@@ -141,7 +141,7 @@ and the OpenSpec change workflow. Architectural decisions are recorded in
 
 ## Build Guide
 
-Detailed build instructions: [docs/anki-eink-device-build-guide.md](docs/anki-eink-device-build-guide.md)
+Detailed build instructions: [docs/build_guide.md](docs/build_guide.md)
 
 Full bill of materials: [hardware/bom.md](hardware/bom.md)
 
