@@ -1,7 +1,7 @@
 ## Purpose
 
 Define the Python package structure for the inksink application, including the
-`src/` layout, `core` and `anki` subpackages, test scaffold, and
+`src/` layout, `core`, `anki`, and `launcher` subpackages, test scaffold, and
 `pyproject.toml` metadata.
 
 ## Requirements
@@ -16,24 +16,24 @@ via `pip install -e .` on the dev machine and runnable as
 
 - **WHEN** `python3 -m inksink` is executed on a machine with the `src/`
   directory on `PYTHONPATH`
-- **THEN** the process exits cleanly (exit code 0) with a stub message
+- **THEN** the Launcher starts (display init may fail on non-Pi hardware, but
+  the process does not exit with an unhandled exception from `__main__.py`)
 
-### Requirement: Package has `core` and `anki` subpackages
+### Requirement: Package has `core`, `anki`, and `launcher` subpackages
 
-The package SHALL contain `inksink.core` and `inksink.anki` subpackages.
-Each subpackage SHALL have stub modules matching the components described
-in the build guide.
+The package SHALL contain `inksink.core`, `inksink.anki`, and
+`inksink.launcher` subpackages. Each subpackage SHALL have an `__init__.py`.
 
 #### Scenario: Subpackages are importable
 
-- **WHEN** `from inksink import core, anki` is executed
-- **THEN** both imports succeed without errors
+- **WHEN** `from inksink import core, anki, launcher` is executed
+- **THEN** all three imports succeed without errors
 
 ### Requirement: Test scaffold mirrors package structure
 
-A `tests/` directory SHALL exist with `tests/core/` and `tests/anki/`
-subdirectories and a `conftest.py` at the root. Each subdirectory SHALL
-contain at least a placeholder test file.
+A `tests/` directory SHALL exist with `tests/core/`, `tests/anki/`, and
+`tests/launcher/` subdirectories and a `conftest.py` at the root. Each
+subdirectory SHALL contain at least a placeholder test file.
 
 #### Scenario: pytest discovers tests
 
