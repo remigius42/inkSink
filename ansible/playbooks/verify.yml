@@ -54,6 +54,33 @@
         fail_msg: "config.yml missing apps.anki structure"
       no_log: true
 
+    - name: Fail if ankiweb_username not set in config
+      ansible.builtin.assert:
+        that: >
+          (config_content.content | b64decode | from_yaml).apps.anki.ankiweb_username | default('') | trim | length > 0
+        fail_msg: "config.yml missing apps.anki.ankiweb_username"
+      no_log: true
+
+    - name: Fail if ankiweb_password not set in config
+      ansible.builtin.assert:
+        that: >
+          (config_content.content | b64decode | from_yaml).apps.anki.ankiweb_password | default('') | trim | length > 0
+        fail_msg: "config.yml missing apps.anki.ankiweb_password"
+      no_log: true
+
+    - name: Assert collection data directory exists and is writable
+      ansible.builtin.file:
+        path: /var/lib/inksink
+        state: directory
+        mode: "0755"
+      check_mode: true
+      register: collection_dir_check
+
+    - name: Fail if collection directory not present or not writable
+      ansible.builtin.assert:
+        that: not collection_dir_check.changed
+        fail_msg: "/var/lib/inksink is missing or has wrong permissions"
+
     - name: Assert shell wrapper exists
       ansible.builtin.stat:
         path: "{{ inksink_wrapper }}"

@@ -22,6 +22,8 @@ DEFAULTS: dict = {
             "display_mode": "1bit",
             "full_refresh_interval": 20,
             "orientation": "portrait",
+            "ankiweb_username": "",
+            "ankiweb_password": "",
         },
         "launcher": {
             "orientation": "portrait",
