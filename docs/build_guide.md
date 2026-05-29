@@ -68,9 +68,9 @@ ______________________________________________________________________
 | -- | -- |
 | E-ink HAT — SPI | GPIO 8, 10, 11 (CE0/CS, MOSI, SCLK) |
 | E-ink HAT — control | GPIO 17, 18, 24, 25 (RST, PWR, BUSY, DC) |
-| PiSugar 3 — I2C | GPIO 2, 3 (SDA, SCL) |
-| PiSugar 3 — power | Pins 2, 4, 6 (5V, 5V, GND via pogo pins) |
-| Buttons | GPIO 4, 5, 6, 7, 12, 13, 16, 19 (btn_1–btn_8) |
+| PiSugar 3 — pogo pins | Physical 2, 4 (5V), 3/GPIO2 (SDA), 5/GPIO3 (SCL), 6, 9 (GND) |
+| Buttons | GPIO 4, 12, 13, 16, 19, 22, 26, 27 (btn_1–btn_8) |
+| Reserve | GPIO 5, 6 (physical pins 29, 31) — pre-soldered, unassigned |
 
 Pin assignments per the [Waveshare 7.5inch e-Paper HAT
 manual](https://www.waveshare.com/wiki/7.5inch_e-Paper_HAT_Manual) and [PiSugar
@@ -83,13 +83,13 @@ PiSugar 3 I2C addresses: `0x57` (battery/power management), `0x68` (RTC).
 | Button | GPIO |
 | -- | -- |
 | btn_1 | 4 |
-| btn_2 | 5 |
-| btn_3 | 6 |
-| btn_4 | 7 |
-| btn_5 | 12 |
-| btn_6 | 13 |
-| btn_7 | 16 |
-| btn_8 | 19 |
+| btn_2 | 12 |
+| btn_3 | 13 |
+| btn_4 | 16 |
+| btn_5 | 19 |
+| btn_6 | 22 |
+| btn_7 | 26 |
+| btn_8 | 27 |
 
 All buttons: common GND, internal pull-up enabled in software.
 
@@ -111,9 +111,11 @@ tubing. Route wires out the side once the HAT is seated on 11mm standoffs.
 
 ### Assembly Order
 
-1. Attach PiSugar 3 to Pi (pogo pins; secure with screws).
-1. Solder button wires to GPIO pins (see Button Wiring above).
+1. Solder button wires to GPIO pins (see Button Wiring above). Also solder
+   reserve wires to GPIO 5 and 6 (physical pins 29, 31) — cap free ends and
+   route alongside button wires.
 1. Install 11mm standoffs; plug HAT onto header; route wires out the side; screw down.
+1. Attach PiSugar 3 to Pi (pogo pins; secure with screws).
 1. Plug battery cable into PiSugar 3.
 1. Place stack in case; connect free wire ends to tactile buttons; close case.
 
