@@ -4,8 +4,8 @@
 | -- | -- |
 | Source | <https://github.com/waveshare/e-Paper> |
 | Path | `RaspberryPi_JetsonNano/python/lib/waveshare_epd/` |
-| Commit | TBD — pin when files are copied from upstream |
-| Date | TBD |
+| Commit | `86aa9932f471a50157cf02fafadc2c1b4a965449` |
+| Date | 2026-05-28 |
 | Files | `epd7in5_V2.py`, `epdconfig.py` |
 
 ## Why vendored

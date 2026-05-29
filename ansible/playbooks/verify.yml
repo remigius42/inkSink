@@ -1,8 +1,11 @@
+# SPDX-License-Identifier: MIT
 ---
 - name: Verify inksink device state
   hosts: all
-  become: true
   tasks:
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
     - name: Assert required packages are installed
       ansible.builtin.package_facts:
         manager: apt
@@ -17,11 +20,30 @@
         - wkhtmltopdf
         - fonts-noto-cjk
         - ufw
+        - rsync
+        - fail2ban
 
-    - name: Assert smbus2 is importable
+    - name: Assert smbus2 is importable from virtualenv
       ansible.builtin.command:
-        cmd: python3 -c "import smbus2"
+        cmd: "{{ inksink_venv_dir }}/bin/python3 -c 'import smbus2'"
       changed_when: false
+
+    - name: Assert waveshare driver is importable
+      ansible.builtin.command:
+        cmd: >-
+          {{ inksink_venv_dir }}/bin/python3
+          -c "from waveshare_epd import epd7in5_V2"
+      environment:
+        PYTHONPATH: "{{ inksink_vendor_dir }}"
+      changed_when: false
+
+    - name: Fail if fail2ban not running or not enabled
+      ansible.builtin.assert:
+        that:
+          - "'fail2ban.service' in ansible_facts.services"
+          - "ansible_facts.services['fail2ban.service'].state == 'running'"
+          - "ansible_facts.services['fail2ban.service'].status == 'enabled'"
+        fail_msg: "fail2ban is not running or not enabled"
 
     - name: Assert inksink source directory exists
       ansible.builtin.stat:
@@ -68,11 +90,11 @@
         fail_msg: "config.yml missing apps.anki.ankiweb_password"
       no_log: true
 
-    - name: Assert collection data directory exists and is writable
+    - name: Assert collection data directory exists with correct permissions
       ansible.builtin.file:
         path: /var/lib/inksink
         state: directory
-        mode: "0755"
+        mode: "0750"
       check_mode: true
       register: collection_dir_check
 
@@ -90,10 +112,7 @@
       ansible.builtin.assert:
         that: wrapper.stat.exists
 
-    - name: Assert inksink service is running and enabled
-      ansible.builtin.service_facts:
-
-    - name: Fail if service not running
+    - name: Fail if inksink service not running or not enabled
       ansible.builtin.assert:
         that:
           - (inksink_service + '.service') in ansible_facts.services

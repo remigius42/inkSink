@@ -16,11 +16,16 @@ Use **Raspberry Pi Imager** to flash Raspberry Pi OS Lite (64-bit) onto the Micr
 In the Imager's "Advanced options" (gear icon), configure:
 
 - **Hostname:** `inksink`
-- **Enable SSH:** yes, with your public key
-- **WiFi:** SSID (entered here manually) and password (`vault_wifi_password` in vault stores the password only)
+- **Enable SSH:** yes — paste your SSH public key here. This is the **only**
+  key-delivery mechanism: `setup.yml` disables password authentication, so if
+  the key is not in place before Ansible runs you will be locked out.
+- **WiFi:** SSID and password (the password is also stored in Ansible Vault as
+  `vault_wifi_password` for reference, but WiFi itself is configured here, not
+  by Ansible)
 - **Locale / timezone:** as appropriate
 
-Insert the card into the Pi and power on. The device will be reachable at `inksink.local` once it connects to WiFi.
+Insert the card into the Pi and power on. The device will be reachable at
+`inksink.local` once it connects to WiFi.
 
 ## 2. Set Up Ansible Vault
 

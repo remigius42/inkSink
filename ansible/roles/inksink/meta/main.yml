@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MIT
+galaxy_info:
+  author: Andreas Remigius Schmidt
+  description: App deployment and service management for the inksink application
+  license: MIT
+  min_ansible_version: "2.12"
+  galaxy_tags: []
+dependencies: []

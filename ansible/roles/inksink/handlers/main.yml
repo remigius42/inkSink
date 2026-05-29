@@ -1,9 +1,13 @@
+# SPDX-License-Identifier: MIT
 ---
 - name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true
+  become: true
 
 - name: Restart inksink
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: "{{ inksink_service }}"
     state: restarted
+    daemon_reload: true
+  become: true

@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MIT
+---
+base_locale_timezone: "Europe/Zurich"
+base_install_neovim: true
+base_fail2ban_bantime: "1h"
+base_fail2ban_findtime: "10m"
+base_fail2ban_maxretry: 5
