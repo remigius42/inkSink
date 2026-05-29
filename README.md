@@ -4,6 +4,12 @@
 
 Copyright 2026 [Andreas Remigius Schmidt](https://github.com/remigius42)
 
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%20OS%20Trixie-lightgrey.svg)
+[![CI](https://github.com/remigius42/inkSink/actions/workflows/ci.yml/badge.svg)](https://github.com/remigius42/inkSink/actions/workflows/ci.yml)
+
+<img src="docs/logo.svg" alt="inkSink logo" width="300" /> <!-- markdownlint-disable-line MD033 -->
+
 A portable e-ink display device for spaced repetition learning, reading, and
 personal dashboards. **ink** = e-ink display; **Sink** = terminal node in graph
 theory where information flows to rest.
