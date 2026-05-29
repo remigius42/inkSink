@@ -157,7 +157,7 @@ Full bill of materials: [hardware/bom.md](hardware/bom.md)
 1. **3D print case and button caps**
 1. **Solder button wires** to GPIO pins (28AWG with heat shrink)
 1. **Assemble electronics** (PiSugar → Pi → HAT stack)
-1. **Install software** (Raspberry Pi OS Lite + dependencies)
+1. **Install software** — see [docs/setup.md](docs/setup.md) for full instructions
 1. **Configure application** (AnkiWeb credentials, preferences)
 1. **Test and iterate**
 

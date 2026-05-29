@@ -71,5 +71,5 @@ shell wrapper sets `PYTHONPATH` to include `/opt/waveshare-vendor`.
 #### Scenario: Driver is importable after deploy
 
 - **WHEN** `setup.yml` completes
-- **THEN** `PYTHONPATH=/opt/waveshare-vendor python3 -c "from waveshare_epd
+- **THEN** `PYTHONPATH=/opt/waveshare-vendor /opt/inksink-venv/bin/python3 -c "from waveshare_epd
   import epd7in5_V2"` succeeds on the device

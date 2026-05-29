@@ -1,6 +1,14 @@
+# SPDX-License-Identifier: MIT
+---
+base_locale_timezone: "Europe/Zurich"
+base_fail2ban_bantime: "1h"
+base_fail2ban_findtime: "10m"
+base_fail2ban_maxretry: 5
+
 inksink_src_dir: "{{ playbook_dir }}/../../src/inksink"
 inksink_dest_dir: /opt/inksink
 inksink_vendor_dir: /opt/waveshare-vendor
+inksink_venv_dir: /opt/inksink-venv
 inksink_config_dir: /etc/inksink
 inksink_wrapper: /usr/local/bin/inksink
 inksink_service: inksink

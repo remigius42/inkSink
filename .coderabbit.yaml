@@ -9,3 +9,8 @@ reviews:
         fragments intended to guide implementation. They are not expected to be fully functional
         or production-ready. Do not flag missing imports, incomplete snippets, missing error
         handling, or other "not runnable as written" issues.
+    - path: "vendor/**/*.py"
+      instructions: >
+        Python files under vendor/ are third-party code that has been added to
+        the project to simplify setup and packaging. They should not be changed,
+        unless they have obvious errors.

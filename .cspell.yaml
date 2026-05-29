@@ -4,6 +4,7 @@ words:
   - andreas
   - anki
   - ankiweb
+  - bantime
   - bluetoothctl
   - coderabbit
   - commitlint
@@ -17,6 +18,7 @@ words:
   - fsrs
   - epd
   - esphome
+  - findtime
   - firstrun
   - framebuffer
   - gethostname
@@ -31,6 +33,7 @@ words:
   - jetson
   - journalctl
   - kanji
+  - maxretry
   - nmcli
   - noto
   - openspec
@@ -70,6 +73,8 @@ ignorePaths:
   - .gemini/commands/opsx
   - .gemini/skills/openspec*
   - "**/.cspell.yaml"
+  - "vendor/**/*.py"
+  - "vendor/**/*.scad"
 dictionaries: []
 dictionaryDefinitions: []
 import: []

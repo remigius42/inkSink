@@ -1,2 +1,2 @@
 #!/bin/sh
-PYTHONPATH="{{ inksink_dest_dir }}:{{ inksink_vendor_dir }}" exec python3 -m inksink "$@"
+PYTHONPATH="{{ inksink_dest_dir }}:{{ inksink_vendor_dir }}" exec {{ inksink_venv_dir }}/bin/python3 -m inksink "$@"

@@ -19,8 +19,6 @@ retry_files_enabled = False
 display_skipped_hosts = no
 pipelining = True
 allow_world_readable_tmpfiles = True
-
-[facts_caching]
 fact_caching = jsonfile
 fact_caching_connection = .ansible/facts_cache
 fact_caching_timeout = 86400

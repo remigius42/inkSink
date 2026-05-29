@@ -1,5 +1,15 @@
+# SPDX-License-Identifier: MIT
 ---
 - name: Restart sshd
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: ssh
     state: restarted
+    daemon_reload: true
+  become: true
+
+- name: Restart fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: restarted
+    daemon_reload: true
+  become: true

@@ -1,15 +1,17 @@
+# SPDX-License-Identifier: MIT
 ---
 - name: Ensure inksink directories exist
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: directory
     owner: pi
     group: pi
-    mode: "0755"
+    mode: "{{ item.mode }}"
   loop:
-    - "{{ inksink_dest_dir }}"
-    - "{{ inksink_vendor_dir }}"
-    - "{{ inksink_config_dir }}"
+    - {path: "{{ inksink_dest_dir }}", mode: "0755"}
+    - {path: "{{ inksink_config_dir }}", mode: "0755"}
+    - {path: /var/lib/inksink, mode: "0750"}
+  become: true
 
 - name: Synchronize inksink source
   ansible.posix.synchronize:
@@ -28,21 +30,7 @@
     owner: pi
     group: pi
     recurse: true
-
-- name: Synchronize waveshare vendor
-  ansible.posix.synchronize:
-    src: "{{ playbook_dir }}/../../vendor/waveshare_epd/"
-    dest: "{{ inksink_vendor_dir }}/"
-    delete: true
-  notify:
-    - Restart inksink
-
-- name: Set ownership of waveshare vendor
-  ansible.builtin.file:
-    path: "{{ inksink_vendor_dir }}"
-    owner: pi
-    group: pi
-    recurse: true
+  become: true
 
 - name: Template config file
   ansible.builtin.template:
@@ -50,9 +38,10 @@
     dest: "{{ inksink_config_dir }}/config.yml"
     owner: pi
     group: pi
-    mode: "0600"
+    mode: "0640"
   notify:
     - Restart inksink
+  become: true
 
 - name: Install shell wrapper
   ansible.builtin.template:
@@ -63,10 +52,40 @@
     mode: "0755"
   notify:
     - Restart inksink
+  become: true
 
-- name: Install systemd service
-  ansible.builtin.copy:
-    src: inksink.service
+- name: Create app virtualenv
+  ansible.builtin.command:
+    cmd: python3 -m venv {{ inksink_venv_dir }}
+    creates: "{{ inksink_venv_dir }}/bin/python3"
+  become: true
+
+- name: Set ownership of virtualenv
+  ansible.builtin.file:
+    path: "{{ inksink_venv_dir }}"
+    owner: pi
+    group: pi
+    recurse: true
+  become: true
+
+- name: Install Python dependencies into virtualenv
+  ansible.builtin.pip:
+    name:
+      - "anki==25.9.4"
+      - "smbus2>=0.6.1,<0.7"
+      - Pillow
+      - PyYAML
+      - Jinja2
+      - requests
+    state: present
+    virtualenv: "{{ inksink_venv_dir }}"
+    virtualenv_python: python3
+  become: true
+  become_user: pi
+
+- name: Install systemd service unit
+  ansible.builtin.template:
+    src: inksink.service.j2
     dest: /etc/systemd/system/inksink.service
     owner: root
     group: root
@@ -74,12 +93,7 @@
   notify:
     - Reload systemd
     - Restart inksink
-
-- name: Install smbus2 Python dependency
-  ansible.builtin.pip:
-    name: "smbus2>=0.6.1,<0.7"
-    state: present
-    extra_args: --break-system-packages
+  become: true
 
 - name: Enable and start inksink service
   ansible.builtin.systemd:
@@ -87,3 +101,4 @@
     enabled: true
     state: started
     daemon_reload: true
+  become: true
