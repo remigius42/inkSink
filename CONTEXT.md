@@ -23,8 +23,9 @@ run on boot; content Apps (`anki`, `ebooks`, `pdf`) are launched from it.
 ## Base role
 
 The Ansible role that brings a freshly flashed Pi to a usable state: OS
-packages, locale/timezone, WiFi, SSH hardening, firewall, and the Waveshare
-e-ink driver. The Device is non-functional without it.
+packages, locale/timezone, SSH hardening, firewall, and the Waveshare e-ink
+driver. WiFi is configured via Raspberry Pi Imager before Ansible runs. The
+Device is non-functional without it.
 
 ## Button
 

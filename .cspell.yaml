@@ -53,6 +53,7 @@ words:
   - subpackages
   - trixie
   - venv
+  - virtualenv
   - waveshare
   - wkhtmltoimage
   - wlan
