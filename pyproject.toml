@@ -37,6 +37,9 @@ exclude = ["vendor"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]  # pycodestyle, pyflakes, isort
 
+[tool.bandit.assert_used]
+skips = ["*/test_*.py"]
+
 [tool.pyright]
 pythonVersion = "3.13"
 venvPath = "."
