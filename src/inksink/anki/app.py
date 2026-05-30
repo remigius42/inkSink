@@ -12,8 +12,9 @@ from anki.scheduler_pb2 import CardAnswer
 from inksink.anki.client import AnkiWebClient, AuthError
 from inksink.anki.layout import fill_review
 from inksink.core import renderer
-from inksink.core.layout import fill_fullscreen
+from inksink.core.layout import fill_content
 from inksink.core.state import wifi_status
+from inksink.core.ui import ButtonState
 
 _RATING_MAP: dict[str, int] = {
     "btn_5": CardAnswer.AGAIN,
@@ -22,8 +23,8 @@ _RATING_MAP: dict[str, int] = {
     "btn_8": CardAnswer.EASY,
 }
 
-_QUESTION_BUTTONS = ["Menu", "Show Answer", "", "", "", "", "", ""]
-_ANSWER_BUTTONS = ["Menu", "", "", "", "Again", "Hard", "Good", "Easy"]
+_QUESTION_BUTTONS: list[str] = ["Menu", "Show Answer", "", "", "", "", "", ""]
+_ANSWER_BUTTONS: list[str] = ["Menu", "", "", "", "Again", "Hard", "Good", "Easy"]
 
 
 @dataclass
@@ -40,25 +41,49 @@ class ReviewSession:
         display,
         input_handler,
         settings: dict,
+        compositor=None,
     ) -> None:
         self._client = client
         self._display = display
         self._input = input_handler
         self._orientation = settings["apps"]["anki"]["orientation"]
         self._mode = settings["apps"]["anki"].get("display_mode", "1bit")
+        self._compositor = compositor
 
     def _render(self, html: str) -> None:
-        image = renderer.render(html, mode=self._mode, orientation=self._orientation)
-        self._display.display_full(image)
+        if self._compositor is not None:
+            self._compositor.set_content(html)
+        else:
+            image = renderer.render(
+                html, mode=self._mode, orientation=self._orientation
+            )
+            self._display.display_full(image)
+
+    def _set_buttons(self, labels: list[str]) -> None:
+        if self._compositor is not None:
+            converted = [lbl if lbl != "" else None for lbl in labels]
+            states = [
+                ButtonState.DEFAULT if lbl is not None else ButtonState.DISABLED
+                for lbl in converted
+            ]
+            self._compositor.set_buttons(converted, states)
 
     def run(self) -> None:
         state = SessionState()
 
-        self._render(fill_fullscreen("<p>Syncing…</p>"))
+        self._render(
+            fill_content("<p>Syncing…</p>", has_statusbar=False, has_buttons=False)
+        )
         self._client.sync_down()
         state.last_sync = datetime.now()
         if not wifi_status().connected:
-            self._render(fill_fullscreen("<p>Offline — using last sync</p>"))
+            self._render(
+                fill_content(
+                    "<p>Offline — using last sync</p>",
+                    has_statusbar=False,
+                    has_buttons=False,
+                )
+            )
             time.sleep(2)
 
         col = self._client.col
@@ -76,6 +101,7 @@ class ReviewSession:
 
             # QUESTION
             while True:
+                self._set_buttons(_QUESTION_BUTTONS)
                 self._render(
                     fill_review(rich_card.question(), progress, _QUESTION_BUTTONS)
                 )
@@ -88,6 +114,7 @@ class ReviewSession:
 
             # ANSWER
             while True:
+                self._set_buttons(_ANSWER_BUTTONS)
                 self._render(fill_review(rich_card.answer(), progress, _ANSWER_BUTTONS))
                 action = self._input.wait_for_action()
                 if action == "btn_1":
@@ -109,7 +136,7 @@ class ReviewSession:
             f"<p>Done! {state.review_count} cards reviewed"
             f" in {elapsed_min} minutes.</p>"
         )
-        self._render(fill_fullscreen(summary))
+        self._render(fill_content(summary, has_statusbar=False, has_buttons=False))
         while True:
             action = self._input.wait_for_action()
             if action == "btn_1":
@@ -117,20 +144,28 @@ class ReviewSession:
                 return
 
 
-def run_anki(display, input_handler, settings: dict) -> None:
+def run_anki(display, input_handler, settings: dict, compositor=None) -> None:
     """Entry point registered in the Launcher APPS list."""
     try:
         client = AnkiWebClient(settings)
     except AuthError as exc:
-        image = renderer.render(
-            fill_fullscreen(f"<p>Anki auth error: {exc}</p>"),
-            orientation=settings["apps"]["anki"].get("orientation", "portrait"),
+        html = fill_content(
+            f"<p>Anki auth error: {exc}</p>",
+            has_statusbar=False,
+            has_buttons=False,
         )
-        display.display_full(image)
+        if compositor is not None:
+            compositor.set_content(html)
+        else:
+            image = renderer.render(
+                html,
+                orientation=settings["apps"]["anki"].get("orientation", "portrait"),
+            )
+            display.display_full(image)
         time.sleep(3)
         return
 
     try:
-        ReviewSession(client, display, input_handler, settings).run()
+        ReviewSession(client, display, input_handler, settings, compositor).run()
     finally:
         client.close()

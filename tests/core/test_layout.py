@@ -1,87 +1,49 @@
 # spellchecker:ignore fullscreen
 
-from datetime import datetime
-from unittest.mock import patch
-
 import jinja2
 import pytest
 
-from inksink.core.layout import fill_error
+from inksink.core.layout import fill_content, fill_error
 
 
-def test_fill_fullscreen_returns_complete_html():
-    from inksink.core.layout import fill_fullscreen
-
-    result = fill_fullscreen("<p>Hello</p>")
+def test_fill_content_returns_complete_html():
+    result = fill_content("<p>Hello</p>")
     assert result.strip().startswith("<!DOCTYPE html>") or result.strip().startswith(
         "<html"
     )
     assert "<p>Hello</p>" in result
 
 
-def test_fill_fullscreen_no_button_bar():
-    from inksink.core.layout import fill_fullscreen
-
-    result = fill_fullscreen("<p>content</p>")
-    assert "btn_" not in result
-    assert "button-bar" not in result
+def test_fill_content_with_both_false_no_chrome():
+    result = fill_content("<p>content</p>", has_statusbar=False, has_buttons=False)
+    assert "button-chrome" not in result
+    assert "status-chrome" not in result
 
 
-def test_fill_default_injects_content_and_buttons():
-    from inksink.core.layout import fill_default
+def test_fill_content_defaults_reserve_chrome_regions():
+    from inksink.core.ui import BUTTON_BAR_SIZE, STATUS_BAR_HEIGHT
 
-    with (
-        patch("inksink.core.layout.wifi_status") as mock_wifi,
-        patch("inksink.core.layout.battery_percent", return_value=80),
-    ):
-        mock_wifi.return_value = type(
-            "W", (), {"connected": True, "ssid": "Home", "strength": 70}
-        )()
-        result = fill_default(
-            "<p>Card</p>", ["Menu", "Show Answer", "", "", "", "", "", ""]
-        )
-    assert "<p>Card</p>" in result
-    assert "Menu" in result
-    assert "Show Answer" in result
+    result = fill_content("<p>Card</p>")
+    assert str(STATUS_BAR_HEIGHT) in result
+    assert str(BUTTON_BAR_SIZE) in result
 
 
-def test_fill_default_wrong_button_count_raises():
-    from inksink.core.layout import fill_default
+def test_fill_content_no_statusbar_omits_status_region():
+    from inksink.core.ui import STATUS_BAR_HEIGHT
 
-    with pytest.raises(ValueError, match="8"):
-        fill_default("<p>x</p>", ["only", "six", "buttons", "here", "a", "b", "c"])
-
-
-def test_fill_default_status_bar_auto_populated():
-    from inksink.core.layout import fill_default
-
-    with (
-        patch("inksink.core.layout.wifi_status") as mock_wifi,
-        patch("inksink.core.layout.battery_percent", return_value=55),
-    ):
-        mock_wifi.return_value = type(
-            "W", (), {"connected": True, "ssid": "TestNet", "strength": 60}
-        )()
-        result = fill_default("<p>x</p>", [""] * 8)
-    assert "55" in result
-    assert "TestNet" in result
+    with_status = fill_content("<p>x</p>", has_statusbar=True)
+    without_status = fill_content("<p>x</p>", has_statusbar=False)
+    assert str(STATUS_BAR_HEIGHT) in with_status
+    assert str(STATUS_BAR_HEIGHT) not in without_status
 
 
-def test_fill_default_status_bar_includes_time():
-    from inksink.core.layout import fill_default
+def test_fill_content_no_buttons_omits_button_region():
+    from inksink.core.ui import BUTTON_BAR_SIZE
 
-    fixed = datetime(2026, 5, 27, 14, 30)
-    with (
-        patch("inksink.core.layout.datetime") as mock_dt,
-        patch("inksink.core.layout.wifi_status") as mock_wifi,
-        patch("inksink.core.layout.battery_percent", return_value=80),
-    ):
-        mock_dt.now.return_value = fixed
-        mock_wifi.return_value = type(
-            "W", (), {"connected": True, "ssid": "X", "strength": 60}
-        )()
-        result = fill_default("<p>x</p>", [""] * 8)
-    assert "14:30" in result
+    with_buttons = fill_content("<p>x</p>", has_buttons=True)
+    without_buttons = fill_content("<p>x</p>", has_buttons=False)
+    assert str(BUTTON_BAR_SIZE) in with_buttons
+    assert str(BUTTON_BAR_SIZE) not in without_buttons
 
 
 def test_app_layout_independent_of_core(tmp_path):
@@ -110,8 +72,8 @@ def test_fill_error_returns_html_with_message():
 
 def test_fill_error_no_status_bar():
     result = fill_error("oops")
-    assert "status-bar" not in result
-    assert "button-bar" not in result
+    assert "status-chrome" not in result
+    assert "button-chrome" not in result
 
 
 def test_fill_error_escapes_html_in_message():

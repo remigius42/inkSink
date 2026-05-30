@@ -43,3 +43,4 @@ venvPath = "."
 venv = ".venv"
 typeCheckingMode = "standard"
 exclude = ["vendor"]
+reportMissingModuleSource = false

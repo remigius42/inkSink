@@ -75,7 +75,7 @@ def test_run_calls_sync_down_at_start():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -99,7 +99,7 @@ def test_question_renders_card_front_with_progress():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", side_effect=capture_fill),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -121,7 +121,7 @@ def test_question_renders_in_portrait_orientation():
 
     with (
         patch("inksink.anki.app.renderer.render", side_effect=capture_render),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -139,7 +139,7 @@ def test_btn1_in_question_returns():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -156,7 +156,7 @@ def test_btn1_in_question_calls_sync_up():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -174,7 +174,7 @@ def test_other_buttons_in_question_are_ignored():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -199,7 +199,7 @@ def test_btn2_in_question_shows_answer():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", side_effect=capture_fill),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -219,7 +219,7 @@ def test_rating_button_good_records_correct_rating():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -245,7 +245,7 @@ def test_all_rating_buttons_map_correctly(btn, expected_rating):
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -264,7 +264,7 @@ def test_btn1_in_answer_calls_sync_up():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -282,7 +282,7 @@ def test_btn1_in_answer_returns_without_recording():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -300,13 +300,13 @@ def test_done_screen_shows_review_count():
 
     fullscreen_calls: list[str] = []
 
-    def capture_fullscreen(content):
+    def capture_fullscreen(content, **kwargs):
         fullscreen_calls.append(content)
         return "<html/>"
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", side_effect=capture_fullscreen),
+        patch("inksink.anki.app.fill_content", side_effect=capture_fullscreen),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -326,7 +326,7 @@ def test_btn1_in_done_calls_sync_up():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>"),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -351,13 +351,13 @@ def test_done_screen_shows_correct_multi_card_count():
 
     fullscreen_calls: list[str] = []
 
-    def capture_fullscreen(content):
+    def capture_fullscreen(content, **kwargs):
         fullscreen_calls.append(content)
         return "<html/>"
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", side_effect=capture_fullscreen),
+        patch("inksink.anki.app.fill_content", side_effect=capture_fullscreen),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
@@ -388,7 +388,7 @@ def test_run_anki_auth_error_displays_error_and_returns():
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", return_value="<html/>") as mock_fs,
+        patch("inksink.anki.app.fill_content", return_value="<html/>") as mock_fs,
         patch("inksink.anki.app.time.sleep"),
     ):
         run_anki(display, MagicMock(), settings)
@@ -406,13 +406,13 @@ def test_offline_start_shows_offline_message_and_sleeps():
 
     fullscreen_calls: list[str] = []
 
-    def capture_fullscreen(content):
+    def capture_fullscreen(content, **kwargs):
         fullscreen_calls.append(content)
         return "<html/>"
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", side_effect=capture_fullscreen),
+        patch("inksink.anki.app.fill_content", side_effect=capture_fullscreen),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
         patch(
             "inksink.anki.app.wifi_status",
@@ -434,15 +434,95 @@ def test_no_due_cards_shows_done_immediately():
 
     fullscreen_calls: list[str] = []
 
-    def capture_fullscreen(content):
+    def capture_fullscreen(content, **kwargs):
         fullscreen_calls.append(content)
         return "<html/>"
 
     with (
         patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
-        patch("inksink.anki.app.fill_fullscreen", side_effect=capture_fullscreen),
+        patch("inksink.anki.app.fill_content", side_effect=capture_fullscreen),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
     ):
         ReviewSession(client, MagicMock(), ih, _settings()).run()
 
     assert any("Done" in c for c in fullscreen_calls)
+
+
+# ---------------------------------------------------------------------------
+# Compositor path: set_content and set_buttons are called; "" slots → None
+# ---------------------------------------------------------------------------
+
+
+def test_compositor_path_calls_set_content_and_set_buttons():
+    """With a compositor, ReviewSession must use set_content/set_buttons."""
+    client = _make_client(card_ids=[1])
+    ih = MagicMock()
+    # btn_2 shows answer, then btn_5 (AGAIN) answers, then btn_1 exits
+    ih.wait_for_action.side_effect = ["btn_2", "btn_5", "btn_1"]
+
+    compositor = MagicMock()
+
+    with (
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
+        patch("inksink.anki.app.fill_review", return_value="<html/>"),
+        patch("inksink.anki.app.wifi_status", return_value=MagicMock(connected=True)),
+        patch("inksink.anki.app.time.sleep"),
+    ):
+        ReviewSession(client, MagicMock(), ih, _settings(), compositor).run()
+
+    compositor.set_content.assert_called()
+    compositor.set_buttons.assert_called()
+
+    # All set_buttons calls must pass None instead of "" for empty slots
+    for call in compositor.set_buttons.call_args_list:
+        labels_arg = call.args[0]
+        assert "" not in labels_arg, f"'' must be converted to None: {labels_arg}"
+
+    # None slots must have DISABLED state; labeled slots must have DEFAULT state
+    from inksink.core.ui import ButtonState
+
+    for call in compositor.set_buttons.call_args_list:
+        labels_arg, states_arg = call.args[0], call.args[1]
+        for lbl, state in zip(labels_arg, states_arg, strict=True):
+            if lbl is None:
+                assert (
+                    state == ButtonState.DISABLED
+                ), f"None slot must be DISABLED, got {state}"
+            else:
+                assert (
+                    state == ButtonState.DEFAULT
+                ), f"labeled slot must be DEFAULT, got {state}"
+
+
+def test_run_anki_does_not_stop_injected_compositor():
+    """run_anki must not stop a compositor it didn't create."""
+    from inksink.anki.app import run_anki
+
+    settings = {
+        "apps": {
+            "anki": {
+                "orientation": "portrait",
+                "display_mode": "1bit",
+                "ankiweb_username": "u",
+                "ankiweb_password": "p",
+            }
+        }
+    }
+    compositor = MagicMock()
+
+    ih = MagicMock()
+    ih.wait_for_action.return_value = "btn_1"
+
+    with (
+        patch("inksink.anki.app.AnkiWebClient") as mock_client_cls,
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
+        patch("inksink.anki.app.fill_review", return_value="<html/>"),
+        patch("inksink.anki.app.wifi_status", return_value=MagicMock(connected=True)),
+        patch("inksink.anki.app.time.sleep"),
+    ):
+        client = mock_client_cls.return_value
+        client.col.sched.get_queued_cards.return_value.cards = []
+
+        run_anki(MagicMock(), ih, settings, compositor)
+
+    compositor.stop.assert_not_called()

@@ -11,7 +11,7 @@ _epd_stub.epd7in5_V2.EPD.side_effect = lambda: MagicMock()
 sys.modules.setdefault("waveshare_epd", _epd_stub)
 sys.modules.setdefault("waveshare_epd.epd7in5_V2", _epd_stub.epd7in5_V2)
 
-from inksink.__main__ import main  # noqa: E402
+from inksink.__main__ import _handle_app_exception, main  # noqa: E402
 
 _SETTINGS = {
     "display": {
@@ -23,6 +23,28 @@ _SETTINGS = {
     "apps": {"launcher": {"orientation": "portrait"}},
     "renderer": {"cache_max_size": 100},
 }
+
+
+def test_handle_app_exception_stops_compositor_renders_error_and_restarts():
+    compositor = MagicMock()
+    display = MagicMock()
+    input_handler = MagicMock()
+    fake_image = MagicMock()
+
+    with (
+        patch("inksink.__main__.fill_error", return_value="<err>") as mock_fill,
+        patch("inksink.__main__.render", return_value=fake_image),
+        patch("inksink.__main__.Orientation"),
+    ):
+        _handle_app_exception(
+            RuntimeError("oops"), compositor, display, input_handler, _SETTINGS
+        )
+
+    compositor.stop.assert_called_once()
+    mock_fill.assert_called_once_with("oops")
+    display.display_full.assert_called_once_with(fake_image)
+    input_handler.wait_for_action.assert_called_once()
+    compositor.start.assert_called_once()
 
 
 def test_app_exception_shows_error_screen_then_restarts():

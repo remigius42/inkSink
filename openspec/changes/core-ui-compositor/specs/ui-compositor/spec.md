@@ -47,6 +47,7 @@ redraw the button bar region on the framebuffer using Pillow, call
 `display.portrait_rotation` and the current orientation.
 
 Each label SHALL be interpreted as follows:
+
 - A non-empty string — renders as a labeled button slot
 - `None` — renders as invisible (no border, no fill, no label)
 - `""` (empty string) — merges this slot into the previous slot, extending

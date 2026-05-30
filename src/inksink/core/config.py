@@ -15,6 +15,7 @@ DEFAULTS: dict = {
         "portrait_rotation": 90,
         "landscape_rotation": 0,
         "full_refresh_interval": 20,
+        "status_refresh_interval": 20,
     },
     "renderer": {"cache_max_size": 100},
     "apps": {
@@ -24,9 +25,11 @@ DEFAULTS: dict = {
             "orientation": "portrait",
             "ankiweb_username": "",
             "ankiweb_password": "",
+            "display": {"double_vertical_button_size": False},
         },
         "launcher": {
             "orientation": "portrait",
+            "display": {"double_vertical_button_size": False},
         },
     },
 }

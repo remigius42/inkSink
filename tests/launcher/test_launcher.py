@@ -11,8 +11,6 @@ _epd_stub.epd7in5_V2.EPD.side_effect = lambda: MagicMock()
 sys.modules.setdefault("waveshare_epd", _epd_stub)
 sys.modules.setdefault("waveshare_epd.epd7in5_V2", _epd_stub.epd7in5_V2)
 
-from PIL import Image  # noqa: E402
-
 from inksink.launcher.app import Launcher  # noqa: E402
 
 
@@ -43,13 +41,9 @@ def _make_input(actions):
 def test_btn8_calls_display_sleep_and_run_returns():
     display = _make_display()
     input_handler = _make_input(["btn_8"])
-    fake_image = Image.new("1", (480, 800))
 
-    with (
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
-    ):
-        Launcher(display, input_handler, _settings()).run()
+    with patch("inksink.launcher.app.fill_content", return_value="<html/>"):
+        Launcher(display, input_handler, _settings(), MagicMock()).run()
 
     display.sleep.assert_called_once()
 
@@ -57,13 +51,9 @@ def test_btn8_calls_display_sleep_and_run_returns():
 def test_btn8_does_not_call_display_init():
     display = _make_display()
     input_handler = _make_input(["btn_8"])
-    fake_image = Image.new("1", (480, 800))
 
-    with (
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
-    ):
-        Launcher(display, input_handler, _settings()).run()
+    with patch("inksink.launcher.app.fill_content", return_value="<html/>"):
+        Launcher(display, input_handler, _settings(), MagicMock()).run()
 
     display.init.assert_not_called()
 
@@ -73,11 +63,10 @@ def test_btn8_does_not_call_display_init():
 
 def test_render_settings_masks_password_key():
     display = _make_display()
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, _make_input([]), _settings(), MagicMock())
     captured_content: list[str] = []
 
-    def capture_fill(content, buttons):
+    def capture_fill(content, **_kwargs):
         captured_content.append(content)
         return "<html/>"
 
@@ -89,8 +78,7 @@ def test_render_settings_masks_password_key():
                 "display": {"idle_timeout": 180},
             },
         ),
-        patch("inksink.launcher.app.fill_default", side_effect=capture_fill),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", side_effect=capture_fill),
         patch.object(launcher._input_handler, "wait_for_action", return_value="btn_1"),
     ):
         launcher._render_settings()
@@ -102,11 +90,10 @@ def test_render_settings_masks_password_key():
 
 def test_render_settings_shows_flattened_nested_key():
     display = _make_display()
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, _make_input([]), _settings(), MagicMock())
     captured_content: list[str] = []
 
-    def capture_fill(content, buttons):
+    def capture_fill(content, **_kwargs):
         captured_content.append(content)
         return "<html/>"
 
@@ -115,8 +102,7 @@ def test_render_settings_shows_flattened_nested_key():
             "inksink.launcher.app.load_settings",
             return_value={"display": {"idle_timeout": 180}},
         ),
-        patch("inksink.launcher.app.fill_default", side_effect=capture_fill),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", side_effect=capture_fill),
         patch.object(launcher._input_handler, "wait_for_action", return_value="btn_1"),
     ):
         launcher._render_settings()
@@ -131,15 +117,12 @@ def test_render_settings_shows_flattened_nested_key():
 def test_run_routes_btn5_to_status():
     display = _make_display()
     input_handler = _make_input(["btn_5"])
-    launcher = Launcher(display, input_handler, _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, input_handler, _settings(), MagicMock())
 
     with (
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch.object(launcher, "_render_status") as mock_status,
     ):
-        # After btn_5, status renders (internally waits btn_1 to return); run() ends
         mock_status.side_effect = lambda: None
         launcher.run()
 
@@ -149,12 +132,10 @@ def test_run_routes_btn5_to_status():
 def test_run_routes_btn6_to_settings():
     display = _make_display()
     input_handler = _make_input(["btn_6"])
-    launcher = Launcher(display, input_handler, _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, input_handler, _settings(), MagicMock())
 
     with (
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch.object(launcher, "_render_settings") as mock_settings,
     ):
         mock_settings.side_effect = lambda: None
@@ -166,12 +147,10 @@ def test_run_routes_btn6_to_settings():
 def test_run_routes_btn7_to_logs():
     display = _make_display()
     input_handler = _make_input(["btn_7"])
-    launcher = Launcher(display, input_handler, _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, input_handler, _settings(), MagicMock())
 
     with (
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch.object(launcher, "_render_logs") as mock_logs,
     ):
         mock_logs.side_effect = lambda: None
@@ -186,17 +165,16 @@ def test_run_routes_btn7_to_logs():
 def test_settings_no_rerender_when_btn6_clamped_at_bottom():
     """btn_6 at max offset must not trigger a second render."""
     display = _make_display()
+    compositor = MagicMock()
     # 1 key → fits on screen → max_offset = 0, already at bottom
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, _make_input([]), _settings(), compositor)
 
     with (
         patch(
             "inksink.launcher.app.load_settings",
             return_value={"key": "val"},
         ),
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch.object(
             launcher._input_handler,
             "wait_for_action",
@@ -205,19 +183,18 @@ def test_settings_no_rerender_when_btn6_clamped_at_bottom():
     ):
         launcher._render_settings()
 
-    assert display.display_full.call_count == 1
+    assert compositor.set_content.call_count == 1
 
 
 def test_settings_no_rerender_when_btn7_clamped_at_top():
     """btn_7 at offset 0 must not trigger a second render."""
     display = _make_display()
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    compositor = MagicMock()
+    launcher = Launcher(display, _make_input([]), _settings(), compositor)
 
     with (
         patch("inksink.launcher.app.load_settings", return_value={"key": "val"}),
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch.object(
             launcher._input_handler,
             "wait_for_action",
@@ -226,21 +203,20 @@ def test_settings_no_rerender_when_btn7_clamped_at_top():
     ):
         launcher._render_settings()
 
-    assert display.display_full.call_count == 1
+    assert compositor.set_content.call_count == 1
 
 
 def test_settings_rerenders_when_scroll_changes_offset():
     """btn_6 with scrollable content produces a second render."""
     display = _make_display()
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    compositor = MagicMock()
+    launcher = Launcher(display, _make_input([]), _settings(), compositor)
     # 40 keys → total_lines=40 > _VISIBLE_LINES=34, so max_offset=6
     many_keys = {f"key{i}": i for i in range(40)}
 
     with (
         patch("inksink.launcher.app.load_settings", return_value=many_keys),
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch.object(
             launcher._input_handler,
             "wait_for_action",
@@ -249,14 +225,14 @@ def test_settings_rerenders_when_scroll_changes_offset():
     ):
         launcher._render_settings()
 
-    assert display.display_full.call_count == 2
+    assert compositor.set_content.call_count == 2
 
 
 def test_logs_no_rerender_when_btn6_clamped_at_bottom():
     """btn_6 at max offset (few log lines, already at bottom) must not re-render."""
     display = _make_display()
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    compositor = MagicMock()
+    launcher = Launcher(display, _make_input([]), _settings(), compositor)
     few_lines = "\n".join(f"line{i}" for i in range(5))
 
     with (
@@ -264,8 +240,7 @@ def test_logs_no_rerender_when_btn6_clamped_at_bottom():
             "inksink.launcher.app.subprocess.run",
             return_value=MagicMock(returncode=0, stdout=few_lines),
         ),
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch.object(
             launcher._input_handler,
             "wait_for_action",
@@ -274,14 +249,14 @@ def test_logs_no_rerender_when_btn6_clamped_at_bottom():
     ):
         launcher._render_logs()
 
-    assert display.display_full.call_count == 1
+    assert compositor.set_content.call_count == 1
 
 
 def test_logs_no_rerender_when_btn7_clamped_at_top():
     """btn_7 when already at offset 0 (few log lines) must not re-render."""
     display = _make_display()
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    compositor = MagicMock()
+    launcher = Launcher(display, _make_input([]), _settings(), compositor)
     few_lines = "\n".join(f"line{i}" for i in range(5))
 
     with (
@@ -289,8 +264,7 @@ def test_logs_no_rerender_when_btn7_clamped_at_top():
             "inksink.launcher.app.subprocess.run",
             return_value=MagicMock(returncode=0, stdout=few_lines),
         ),
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch.object(
             launcher._input_handler,
             "wait_for_action",
@@ -299,7 +273,7 @@ def test_logs_no_rerender_when_btn7_clamped_at_top():
     ):
         launcher._render_logs()
 
-    assert display.display_full.call_count == 1
+    assert compositor.set_content.call_count == 1
 
 
 # ---- Status screen: inactive buttons are silent no-ops ----
@@ -310,15 +284,11 @@ def test_status_non_btn1_buttons_are_ignored_until_btn1():
     from contextlib import ExitStack
 
     display = _make_display()
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, _make_input([]), _settings(), MagicMock())
 
     with ExitStack() as stack:
         stack.enter_context(
-            patch("inksink.launcher.app.fill_default", return_value="<html/>")
-        )
-        stack.enter_context(
-            patch("inksink.launcher.app.renderer.render", return_value=fake_image)
+            patch("inksink.launcher.app.fill_content", return_value="<html/>")
         )
         stack.enter_context(
             patch("inksink.launcher.app.battery_percent", return_value=-1)
@@ -379,11 +349,10 @@ def test_status_non_btn1_buttons_are_ignored_until_btn1():
 def test_logs_content_shows_journalctl_output():
     """When journalctl succeeds, its output lines appear in the rendered content."""
     display = _make_display()
-    launcher = Launcher(display, _make_input([]), _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, _make_input([]), _settings(), MagicMock())
     captured_content: list[str] = []
 
-    def capture_fill(content, buttons):
+    def capture_fill(content, **_kwargs):
         captured_content.append(content)
         return "<html/>"
 
@@ -392,8 +361,7 @@ def test_logs_content_shows_journalctl_output():
             "inksink.launcher.app.subprocess.run",
             return_value=MagicMock(returncode=0, stdout="line1\nline2"),
         ),
-        patch("inksink.launcher.app.fill_default", side_effect=capture_fill),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", side_effect=capture_fill),
         patch.object(launcher._input_handler, "wait_for_action", return_value="btn_1"),
     ):
         launcher._render_logs()
@@ -419,19 +387,17 @@ def test_btn2_calls_run_anki_with_display_input_settings():
     display = _make_display()
     input_handler = _make_input(["btn_2"])
     settings = _settings()
-    fake_image = Image.new("1", (480, 800))
     received: list = []
 
     def capture(*args, **kwargs):
         received.append((args, kwargs))
 
     with (
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch("inksink.launcher.app.load_settings", return_value=settings),
         patch("inksink.anki.app.run_anki", capture),
     ):
-        Launcher(display, input_handler, settings).run()
+        Launcher(display, input_handler, settings, MagicMock()).run()
 
     assert len(received) == 1
     args, _ = received[0]
@@ -443,12 +409,10 @@ def test_btn2_calls_run_anki_with_display_input_settings():
 def test_run_app_exception_propagates():
     display = _make_display()
     input_handler = _make_input(["btn_2"])
-    launcher = Launcher(display, input_handler, _settings())
-    fake_image = Image.new("1", (480, 800))
+    launcher = Launcher(display, input_handler, _settings(), MagicMock())
 
     with (
-        patch("inksink.launcher.app.fill_default", return_value="<html/>"),
-        patch("inksink.launcher.app.renderer.render", return_value=fake_image),
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
         patch(
             "inksink.launcher.app.APPS",
             [("Anki", MagicMock(side_effect=RuntimeError("crash")))],

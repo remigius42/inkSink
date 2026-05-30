@@ -12,9 +12,8 @@ import subprocess
 from typing import Callable
 
 import inksink.anki.app as _anki_app
-from inksink.core import renderer
 from inksink.core.config import load_settings
-from inksink.core.layout import fill_default
+from inksink.core.layout import fill_content
 from inksink.core.state import (
     battery_percent,
     bluetooth_status,
@@ -26,14 +25,18 @@ from inksink.core.state import (
     version_info,
     wifi_status,
 )
+from inksink.core.ui import ButtonState
 
 _VISIBLE_LINES = 34
 _LINE_HEIGHT_PX = 20
 
 
+# pylint: disable=unnecessary-lambda
 APPS: list[tuple[str, Callable]] = [
-    ("Anki", lambda d, i, s: _anki_app.run_anki(d, i, s)),
+    # lambda defers run_anki lookup so patch("inksink.anki.app.run_anki") works in tests
+    ("Anki", lambda d, i, s, c: _anki_app.run_anki(d, i, s, c)),  # noqa: E731
 ]
+# pylint: enable=unnecessary-lambda
 
 
 def _flatten(obj: object, prefix: str = "") -> list[tuple[str, object]]:
@@ -83,14 +86,20 @@ def _scroll_content_html(lines: list[str], offset: int) -> str:
 
 
 class Launcher:
-    def __init__(self, display, input_handler, settings: dict) -> None:
+    def __init__(self, display, input_handler, settings: dict, compositor) -> None:
+        """Initialize launcher with hardware handles and runtime settings."""
         self._display = display
         self._input_handler = input_handler
         self._orientation = settings["apps"]["launcher"]["orientation"]
+        self._compositor = compositor
 
     def _render_and_display(self, html_doc: str) -> None:
-        image = renderer.render(html_doc, orientation=self._orientation)
-        self._display.display_full(image)
+        self._compositor.set_content(html_doc)
+
+    def _set_buttons(self, labels: list[str | None]) -> None:
+        converted = [lbl if lbl != "" else None for lbl in labels]
+        states = [ButtonState.DEFAULT] * 8
+        self._compositor.set_buttons(converted, states)
 
     def _render_menu(self) -> None:
         app_labels = [app[0] for app in APPS]
@@ -103,8 +112,18 @@ class Launcher:
             for label in app_labels
         )
         content = f'<div style="padding:20px;">{items_html}</div>'
-        buttons = ["", btn2, btn3, btn4, "Status", "Settings", "Logs", "Sleep"]
-        html_doc = fill_default(content, buttons)
+        buttons: list[str | None] = [
+            "",
+            btn2,
+            btn3,
+            btn4,
+            "Status",
+            "Settings",
+            "Logs",
+            "Sleep",
+        ]
+        html_doc = fill_content(content)
+        self._set_buttons(buttons)
         self._render_and_display(html_doc)
 
     def _render_status(self) -> None:
@@ -166,7 +185,8 @@ class Launcher:
         )
         tbl_style = "font-size:18px;padding:10px;width:100%;"
         content = f'<table style="{tbl_style}">{rows_html}</table>'
-        html_doc = fill_default(content, ["Menu", "", "", "", "", "", "", ""])
+        self._set_buttons(["Menu", "", "", "", "", "", "", ""])
+        html_doc = fill_content(content)
         self._render_and_display(html_doc)
 
         while True:
@@ -186,7 +206,8 @@ class Launcher:
         while True:
             if needs_render:
                 content = _scroll_content_html(lines, offset)
-                html_doc = fill_default(content, ["Menu", "", "", "", "", "↓", "↑", ""])
+                self._set_buttons(["Menu", "", "", "", "", "↓", "↑", ""])
+                html_doc = fill_content(content)
                 self._render_and_display(html_doc)
             action = self._input_handler.wait_for_action()
             if action == "btn_1":
@@ -233,7 +254,8 @@ class Launcher:
         while True:
             if needs_render:
                 content = _scroll_content_html(lines, offset)
-                html_doc = fill_default(content, ["Menu", "", "", "", "", "↓", "↑", ""])
+                self._set_buttons(["Menu", "", "", "", "", "↓", "↑", ""])
+                html_doc = fill_content(content)
                 self._render_and_display(html_doc)
             action = self._input_handler.wait_for_action()
             if action == "btn_1":
@@ -258,11 +280,11 @@ class Launcher:
 
         settings = load_settings()
         if action == "btn_2" and len(APPS) > 0:
-            APPS[0][1](self._display, self._input_handler, settings)
+            APPS[0][1](self._display, self._input_handler, settings, self._compositor)
         elif action == "btn_3" and len(APPS) > 1:
-            APPS[1][1](self._display, self._input_handler, settings)
+            APPS[1][1](self._display, self._input_handler, settings, self._compositor)
         elif action == "btn_4" and len(APPS) > 2:
-            APPS[2][1](self._display, self._input_handler, settings)
+            APPS[2][1](self._display, self._input_handler, settings, self._compositor)
         elif action == "btn_5":
             self._render_status()
         elif action == "btn_6":
