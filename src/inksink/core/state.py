@@ -1,9 +1,9 @@
-"""On-demand hardware state reads: battery (PiSugar I2C), WiFi (nmcli),
-and system info (socket, os, /proc/meminfo, shutil, bluetoothctl).
+"""On-demand hardware state reads: battery, WiFi, and system info.
 
-No session state lives here — session tracking belongs to each App.
-All functions return sentinel values when the underlying hardware or tool
-is unavailable, so they are safe to call on a dev machine.
+Reads from PiSugar I2C (battery), nmcli (WiFi), socket, os, /proc/meminfo,
+shutil, and bluetoothctl. No session state lives here — session tracking
+belongs to each App. All functions return sentinel values when the underlying
+hardware or tool is unavailable, so they are safe to call on a dev machine.
 """
 
 # spellchecker:ignore dgram

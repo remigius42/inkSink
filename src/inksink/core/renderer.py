@@ -91,6 +91,7 @@ def render(
 
     Returns:
         PIL Image at the requested orientation dimensions.
+
     """
     if mode not in ("1bit", "4gray"):
         raise ValueError(f"Unknown render mode: {mode!r}; expected '1bit' or '4gray'")

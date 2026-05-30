@@ -38,6 +38,7 @@ class InputHandler:
     """
 
     def __init__(self, pin_map: dict[int, str] | None = None) -> None:
+        """Initialize the input handler with an optional pin-to-button mapping."""
         resolved = dict(pin_map) if pin_map is not None else dict(_DEFAULT_PIN_MAP)
         if not resolved:
             raise ValueError(

@@ -16,6 +16,7 @@ class AuthError(Exception):
 
 class AnkiWebClient:
     def __init__(self, settings: dict) -> None:
+        """Initialize the AnkiWeb client from settings."""
         anki_cfg = settings["apps"]["anki"]
         username = anki_cfg.get("ankiweb_username", "")
         password = anki_cfg.get("ankiweb_password", "")

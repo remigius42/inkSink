@@ -1,7 +1,6 @@
 # spellchecker:ignore tmpl
 
-"""
-Jinja2-based layout filling for Core display layouts.
+"""Jinja2-based layout filling for Core display layouts.
 
 Provides fill_content() and fill_error() which return complete HTML documents
 ready for renderer.render(). Chrome regions (status bar, button bar) are blank
@@ -29,8 +28,7 @@ def fill_content(
     has_statusbar: bool = True,
     has_buttons: bool = True,
 ) -> str:
-    """
-    Return a complete HTML document reserving blank chrome regions.
+    """Return a complete HTML document reserving blank chrome regions.
 
     Chrome (status bar, button bar) is rendered by the Compositor via Pillow;
     the template only reserves blank space of the correct size.

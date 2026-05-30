@@ -28,6 +28,7 @@ def fill_review(content: str, progress: str, buttons: list[str]) -> str:
 
     Raises:
         ValueError: If buttons length is not 8.
+
     """
     if len(buttons) != 8:
         raise ValueError(

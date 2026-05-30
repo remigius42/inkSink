@@ -298,8 +298,7 @@ def test_merged_slot_no_internal_border():
 
 
 def test_vertical_text_default_button_background_is_white():
-    """
-    Vertical-text DEFAULT button keeps background white.
+    """Vertical-text DEFAULT button keeps background white.
 
     Background pixels must not be painted black by the bitmap mask.
     """
@@ -313,8 +312,7 @@ def test_vertical_text_default_button_background_is_white():
 
 
 def test_vertical_text_active_button_background_is_black():
-    """
-    Vertical-text ACTIVE button keeps background black.
+    """Vertical-text ACTIVE button keeps background black.
 
     Background pixels must not be painted white by the bitmap mask.
     """
