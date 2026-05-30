@@ -61,7 +61,7 @@
 
 ## 4. Pillow status bar rendering
 
-- [x] 4.1 Implement `_draw_status_bar(draw, w, orientation)` in
+- [x] 4.1 Implement `_draw_status_bar(draw, w)` in
   `core/ui/status.py` — time, WiFi, battery via `core/state.py`
 
 ## 5. Status bar timer tests

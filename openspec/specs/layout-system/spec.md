@@ -1,50 +1,39 @@
 ## Purpose
 
-Jinja2-based layout system for Core. Provides `fill_fullscreen()` and
-`fill_default()` helpers that produce complete HTML documents ready for
-`renderer.render()`. Apps may define their own layouts independently.
+Jinja2-based layout system for Core. Provides `fill_content()` helper that
+produces complete HTML documents ready for `renderer.render()`. Apps may define
+their own layouts independently.
 
 ## Requirements
 
-### Requirement: Core provides a fullscreen layout
+### Requirement: Core provides a unified fill_content layout function
 
-`core/layout.py` SHALL provide `fill_fullscreen(content: str) -> str` that
-fills `core/layouts/fullscreen.html.j2` with the given HTML content and
-returns a complete HTML document ready for `renderer.render()`. The template
-SHALL occupy the full logical pixel area with no reserved regions.
+`core/layout.py` SHALL provide `fill_content(content: str, has_statusbar: bool = True, has_buttons: bool = True) -> str`
+that fills a single `core/layouts/content.html.j2` template with the given
+HTML content and returns a complete HTML document ready for `renderer.render()`.
+When `has_statusbar=True`, the template SHALL reserve a blank region of
+`STATUS_BAR_HEIGHT` pixels at the top. When `has_buttons=True`, the template
+SHALL reserve a blank region of `BUTTON_BAR_SIZE` pixels at the button-bar
+edge. Both `STATUS_BAR_HEIGHT` and `BUTTON_BAR_SIZE` SHALL be injected as
+Jinja2 template variables from `core/ui/` constants.
 
-#### Scenario: Fullscreen fill returns complete HTML
+#### Scenario: fill_content with defaults reserves both chrome regions
 
-- **WHEN** `fill_fullscreen("<p>Hello</p>")` is called
-- **THEN** the returned string is a complete HTML document containing the
-  content and no button bar or status bar elements
+- **WHEN** `fill_content("<p>Card</p>")` is called
+- **THEN** the returned HTML document has a blank top region of `STATUS_BAR_HEIGHT` px
+  and a blank region of `BUTTON_BAR_SIZE` px at the button-bar edge (derived
+  from orientation and `portrait_rotation`), and no button labels or status bar
+  content
 
-### Requirement: Core provides a default layout with button bar and status bar
+#### Scenario: fill_content with has_statusbar=False omits status bar region
 
-`core/layout.py` SHALL provide `fill_default(content: str, buttons: list[str]) -> str`
-that fills `core/layouts/default.html.j2`. The `buttons` list SHALL contain
-exactly 8 strings (one per `btn_1`–`btn_8`); an empty string means that
-button is inactive. The status bar (current time, WiFi connected state, SSID, and
-battery percent) SHALL be populated automatically by Core via `status.time`,
-`status.wifi`, `status.ssid`, and `status.battery` — it is not the
-caller's responsibility.
+- **WHEN** `fill_content(content, has_statusbar=False)` is called
+- **THEN** the returned HTML has no reserved top region
 
-#### Scenario: Default fill injects content and button labels
+#### Scenario: fill_content with both False reproduces fullscreen behavior
 
-- **WHEN** `fill_default("<p>Card</p>", ["Menu", "Show Answer", "", "", "", "", "", ""])` is called
-- **THEN** the returned HTML contains the content, "Menu" in the btn_1 slot,
-  "Show Answer" in the btn_2 slot, and empty strings in the remaining slots
-
-#### Scenario: Wrong button count raises ValueError
-
-- **WHEN** `fill_default(content, buttons)` is called with a list of length ≠ 8
-- **THEN** `ValueError` is raised identifying the wrong count
-
-#### Scenario: Status bar is auto-populated
-
-- **WHEN** `fill_default(content, buttons)` is called
-- **THEN** the returned HTML contains the current time, WiFi status, and
-  battery percent without the caller supplying them
+- **WHEN** `fill_content(content, has_statusbar=False, has_buttons=False)` is called
+- **THEN** the returned HTML occupies the full logical pixel area with no reserved regions
 
 ### Requirement: Apps may define their own layouts
 
