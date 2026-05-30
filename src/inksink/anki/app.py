@@ -43,6 +43,7 @@ class ReviewSession:
         settings: dict,
         compositor=None,
     ) -> None:
+        """Initialize a review session."""
         self._client = client
         self._display = display
         self._input = input_handler
