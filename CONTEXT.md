@@ -44,12 +44,23 @@ Hardware-level settings (e.g. `display.idle_timeout`) and Core infrastructure
 settings (e.g. `renderer.cache_max_size`) use named top-level sections.
 Defaults are defined in `core/config.py` and merged at load time.
 
+## Compositor
+
+Stateful object in `core/ui/compositor.py` that owns the in-memory 1-bit
+framebuffer and orchestrates the two-layer rendering pipeline. wkhtmltoimage
+renders the content zone; Pillow renders chrome (status bar, button bar) onto
+the framebuffer. Drives `display.display_partial()` for chrome-only updates
+(button highlights, status bar refresh) without re-invoking wkhtmltoimage.
+One instance exists for the process lifetime, instantiated at boot alongside
+`Display`. Timer loop refreshes the status bar every
+`display.status_refresh_interval` seconds (default 20 s) via a daemon thread.
+
 ## Core
 
 Shared infrastructure used by all Apps: display driver wrapper, GPIO input
 handler, orientation-aware HTML-to-image renderer, Jinja2 layout system,
-config (settings load/save), and hardware state (battery, WiFi). Lives in
-`src/inksink/core/`. Session state belongs to each App, not Core.
+Compositor, config (settings load/save), and hardware state (battery, WiFi).
+Lives in `src/inksink/core/`. Session state belongs to each App, not Core.
 
 ## Deploy
 
@@ -86,10 +97,9 @@ Launcher. Implemented in `src/inksink/launcher/app.py`.
 ## Layout
 
 An HTML Jinja2 template that defines the screen structure for a rendered App
-state. Two built-in layouts: `fullscreen` (one content slot, App has total
-control) and `default` (content slot + button label bar; status bar with time,
-WiFi, and battery is auto-populated by Core). Apps may define their own
-layouts.
+state. One built-in layout: `content` (`fill_content(content, has_statusbar, has_buttons)`)
+which reserves blank white regions for Pillow-rendered chrome.
+Apps may define their own layout templates in `<app>/layouts/`.
 
 ## Status Screen
 

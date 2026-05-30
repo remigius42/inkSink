@@ -1,10 +1,12 @@
 ## REMOVED Requirements
 
 ### Requirement: Core provides a fullscreen layout
+
 **Reason**: Replaced by `fill_content(content, has_statusbar=False, has_buttons=False)`
 **Migration**: Replace `fill_fullscreen(content)` with `fill_content(content, has_statusbar=False, has_buttons=False)`
 
 ### Requirement: Core provides a default layout with button bar and status bar
+
 **Reason**: Replaced by `fill_content`; button labels and states are now passed
 to `compositor.set_buttons()` instead of the layout fill function; status bar
 is Pillow-rendered by the Compositor, not HTML-rendered by the layout

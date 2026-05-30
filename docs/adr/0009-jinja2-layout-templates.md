@@ -39,18 +39,17 @@ browser — important when tuning e-ink font sizes and refresh regions.
 
 Layouts are Jinja2 `.html.j2` files living in `core/layouts/` (built-in) or
 `<app>/layouts/` (App-specific). A `core/layout.py` module provides named
-filling functions (e.g. `fill_default(content, buttons)`) rather than a
-generic `fill(template, context)` interface — named parameters make slot
-mismatches a TypeError at the call site, not a silent missing-key at render
-time.
+filling functions rather than a generic `fill(template, context)` interface —
+named parameters make slot mismatches a TypeError at the call site, not a
+silent missing-key at render time.
 
-Two built-in layouts:
+One built-in layout (`fill_content` consolidation, superseding `fullscreen`
+and `default`):
 
-- **`fullscreen`** — one `content` slot. The App controls the entire screen.
-- **`default`** — `content` (App-provided HTML) and `buttons` (8 label
-  strings, one per `btn_1`–`btn_8`). Also includes a status bar (time, WiFi,
-  battery) populated automatically by Core from `core/state.py`; Apps do not
-  manage it.
+- **`content`** — reserves blank white regions at the status bar edge and
+  button bar edge when `has_statusbar=True` / `has_buttons=True`. Chrome is
+  rendered by the Compositor via Pillow, not by the template. Passing both as
+  `False` reproduces fullscreen behavior.
 
 Apps that need custom regions (e.g. Anki's progress indicator "3 / 47") define
 their own layout template and a corresponding filling function.
@@ -59,15 +58,10 @@ Jinja2 is added to `pyproject.toml` `[project.dependencies]`.
 
 ## Consequences
 
-- `core/layout.py` calls `wifi_status()` and `battery_percent()` on every
-  fill — fresh values per render with no background thread; acceptable
-  because e-ink renders already take 0.4–4 s
+- Chrome (status bar, button labels) is no longer rendered by the template —
+  the Compositor owns it via Pillow (see ADR 0012 and ADR 0013)
 - Layout files can be opened in a browser with placeholder content for visual
   iteration without running the full app
-- Apps must pass a `buttons` list of exactly 8 strings (empty string = inactive
-  button) to the `default` layout; a wrong length is a programming error caught
-  at fill time
-- Jinja2 is a new runtime dependency; it is pure Python and ships a
-  `py3-none-any` wheel so ARM install is straightforward
 - The renderer cache key is unaffected — layouts are resolved before the
   render call; the renderer sees only the filled HTML string
+- `fill_fullscreen` and `fill_default` are removed; callers use `fill_content`
