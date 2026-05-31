@@ -15,6 +15,7 @@ import inksink.anki.app as _anki_app
 from inksink.core.config import load_settings
 from inksink.core.layout import fill_content
 from inksink.core.state import (
+    BluetoothStatus,
     battery_percent,
     bluetooth_status,
     hostname,
@@ -37,6 +38,26 @@ APPS: list[tuple[str, Callable]] = [
     ("Anki", lambda d, i, s, c: _anki_app.run_anki(d, i, s, c)),  # noqa: E731
 ]
 # pylint: enable=unnecessary-lambda
+
+
+def _format_bluetooth(bt: BluetoothStatus) -> str:
+    if not bt.enabled:
+        return "off"
+    if not bt.connected_devices:
+        return "on"
+    devices = ", ".join(d[:30] for d in bt.connected_devices)
+    return f"on — {devices}"
+
+
+def _next_scroll_offset(action: str, offset: int, max_offset: int) -> tuple[int, bool]:
+    """Return (new_offset, needs_render) for a scroll button press."""
+    if action == "btn_6":
+        new = min(offset + 5, max_offset)
+    elif action == "btn_7":
+        new = max(0, offset - 5)
+    else:
+        return offset, False
+    return new, new != offset
 
 
 def _flatten(obj: object, prefix: str = "") -> list[tuple[str, object]]:
@@ -126,72 +147,67 @@ class Launcher:
         self._set_buttons(buttons)
         self._render_and_display(html_doc)
 
-    def _render_status(self) -> None:
+    def _build_status_rows(self) -> list[tuple[str, str]]:
         from datetime import datetime
 
-        now = datetime.now().strftime("%H:%M:%S")
         battery = battery_percent()
         wifi = wifi_status()
-        host = hostname()
-        ip = ip_address()
         bt = bluetooth_status()
         load = load_averages()
         mem = memory_info()
         stor = storage_info()
-        ver = version_info()
 
-        battery_str = "unavailable" if battery == -1 else f"{battery}%"
-        wifi_str = f"{wifi.ssid} ({wifi.strength}%)" if wifi.connected else "Offline"
-        host_str = host[:30]
-        ip_str = ip
-        bt_enabled = "on" if bt.enabled else "off"
-        bt_devices = (
-            ", ".join(d[:30] for d in bt.connected_devices)
-            if bt.connected_devices
-            else "no devices connected"
-        )
-        bt_str = f"{bt_enabled}" + (f" — {bt_devices}" if bt.enabled else "")
-        load_str = (
-            "unavailable"
-            if load[0] == -1.0
-            else f"{load[0]:.2f} / {load[1]:.2f} / {load[2]:.2f}"
-        )
-        mem_str = (
-            "unavailable"
-            if mem.total_mb == -1
-            else f"{mem.total_mb} MB total / {mem.free_mb} MB free"
-        )
-        stor_str = (
-            "unavailable"
-            if stor.total_gb == -1.0
-            else f"{stor.total_gb:.1f} GB total / {stor.free_gb:.1f} GB free"
-        )
-
-        rows = [
-            ("Time", now),
-            ("Battery", battery_str),
-            ("WiFi", wifi_str),
-            ("Hostname", host_str),
-            ("IP", ip_str),
-            ("Bluetooth", bt_str),
-            ("Load", load_str),
-            ("Memory", mem_str),
-            ("Storage", stor_str),
-            ("Version", ver),
+        return [
+            ("Time", datetime.now().strftime("%H:%M:%S")),
+            ("Battery", "unavailable" if battery == -1 else f"{battery}%"),
+            (
+                "WiFi",
+                f"{wifi.ssid} ({wifi.strength}%)" if wifi.connected else "Offline",
+            ),
+            ("Hostname", hostname()[:30]),
+            ("IP", ip_address()),
+            ("Bluetooth", _format_bluetooth(bt)),
+            (
+                "Load",
+                (
+                    "unavailable"
+                    if load[0] == -1.0
+                    else f"{load[0]:.2f} / {load[1]:.2f} / {load[2]:.2f}"
+                ),
+            ),
+            (
+                "Memory",
+                (
+                    "unavailable"
+                    if mem.total_mb == -1
+                    else f"{mem.total_mb} MB total / {mem.free_mb} MB free"
+                ),
+            ),
+            (
+                "Storage",
+                (
+                    "unavailable"
+                    if stor.total_gb == -1.0
+                    else f"{stor.total_gb:.1f} GB total / {stor.free_gb:.1f} GB free"
+                ),
+            ),
+            ("Version", version_info()),
         ]
+
+    def _render_status(self) -> None:
+        rows = self._build_status_rows()
         rows_html = "".join(
-            f"<tr><td><b>{html.escape(k)}</b></td><td>{html.escape(str(v))}</td></tr>"
+            f"<tr><td><b>{html.escape(k)}</b></td>"
+            f"<td>{html.escape(str(v))}</td></tr>"
             for k, v in rows
         )
         tbl_style = "font-size:18px;padding:10px;width:100%;"
         content = f'<table style="{tbl_style}">{rows_html}</table>'
         self._set_buttons(["Menu", "", "", "", "", "", "", ""])
-        html_doc = fill_content(content)
-        self._render_and_display(html_doc)
+        self._render_and_display(fill_content(content))
 
         while True:
-            action = self._input_handler.wait_for_action()
-            if action == "btn_1":
+            if self._input_handler.wait_for_action() == "btn_1":
                 return
 
     def _render_settings(self) -> None:
@@ -212,16 +228,7 @@ class Launcher:
             action = self._input_handler.wait_for_action()
             if action == "btn_1":
                 return
-            elif action == "btn_6":
-                new_offset = min(offset + 5, max_offset)
-                needs_render = new_offset != offset
-                offset = new_offset
-            elif action == "btn_7":
-                new_offset = max(0, offset - 5)
-                needs_render = new_offset != offset
-                offset = new_offset
-            else:
-                needs_render = False
+            offset, needs_render = _next_scroll_offset(action, offset, max_offset)
 
     def _render_logs(self) -> None:
         try:
@@ -260,16 +267,7 @@ class Launcher:
             action = self._input_handler.wait_for_action()
             if action == "btn_1":
                 return
-            elif action == "btn_6":
-                new_offset = min(offset + 5, max_offset)
-                needs_render = new_offset != offset
-                offset = new_offset
-            elif action == "btn_7":
-                new_offset = max(0, offset - 5)
-                needs_render = new_offset != offset
-                offset = new_offset
-            else:
-                needs_render = False
+            offset, needs_render = _next_scroll_offset(action, offset, max_offset)
 
     def _render_sleep(self) -> None:
         self._display.sleep()
@@ -279,18 +277,17 @@ class Launcher:
         action = self._input_handler.wait_for_action()
 
         settings = load_settings()
-        if action == "btn_2" and len(APPS) > 0:
-            APPS[0][1](self._display, self._input_handler, settings, self._compositor)
-        elif action == "btn_3" and len(APPS) > 1:
-            APPS[1][1](self._display, self._input_handler, settings, self._compositor)
-        elif action == "btn_4" and len(APPS) > 2:
-            APPS[2][1](self._display, self._input_handler, settings, self._compositor)
-        elif action == "btn_5":
-            self._render_status()
-        elif action == "btn_6":
-            self._render_settings()
-        elif action == "btn_7":
-            self._render_logs()
-        elif action == "btn_8":
-            self._render_sleep()
+        app_args = (self._display, self._input_handler, settings, self._compositor)
+        dispatch: dict[str, Callable] = {
+            "btn_5": self._render_status,
+            "btn_6": self._render_settings,
+            "btn_7": self._render_logs,
+            "btn_8": self._render_sleep,
+            **{
+                f"btn_{i + 2}": (lambda fn: lambda: fn(*app_args))(APPS[i][1])
+                for i in range(len(APPS))
+            },
+        }
         # btn_1 / unknown: return (go back to __main__ loop → restart Launcher)
+        if action in dispatch:
+            dispatch[action]()

@@ -108,6 +108,15 @@ def render(
     if binary is None:
         raise RuntimeError("wkhtmltoimage not found on PATH")
 
+    converted = _render_html_to_image(binary, html, mode, width, height)
+    _cache.put(key, converted.copy())
+    return converted
+
+
+def _render_html_to_image(
+    binary: str, html: str, mode: str, width: int, height: int
+) -> Image.Image:
+    """Write html to a temp file, shell out to wkhtmltoimage, return PIL image."""
     tmp = tempfile.gettempdir()
     html_path: Path | None = None
     png_path: Path | None = None
@@ -119,36 +128,40 @@ def render(
         with tempfile.NamedTemporaryFile(suffix=".png", dir=tmp, delete=False) as f:
             png_path = Path(f.name)
 
-        subprocess.run(  # nosec B603 — all args are hardcoded or internal; no user input  # noqa: S603
-            [
-                binary,
-                "--enable-local-file-access",
-                "--allow",
-                tmp,
-                "--width",
-                str(width),
-                "--height",
-                str(height),
-                "--encoding",
-                "utf-8",
-                str(html_path),
-                str(png_path),
-            ],
-            check=True,
-            capture_output=True,
-            timeout=30,
-        )
+        _invoke_wkhtmltoimage(binary, tmp, html_path, png_path, width, height)
 
         with Image.open(png_path) as raw:
             img = raw.convert("RGB").resize((width, height))
-        converted = _convert(img, mode)
-        _cache.put(key, converted.copy())
-        return converted
+        return _convert(img, mode)
     finally:
         if html_path and html_path.exists():
             html_path.unlink()
         if png_path and png_path.exists():
             png_path.unlink()
+
+
+def _invoke_wkhtmltoimage(
+    binary: str, tmp: str, html_path: Path, png_path: Path, width: int, height: int
+) -> None:
+    subprocess.run(  # nosec B603 — all args are hardcoded or internal; no user input  # noqa: S603
+        [
+            binary,
+            "--enable-local-file-access",
+            "--allow",
+            tmp,
+            "--width",
+            str(width),
+            "--height",
+            str(height),
+            "--encoding",
+            "utf-8",
+            str(html_path),
+            str(png_path),
+        ],
+        check=True,
+        capture_output=True,
+        timeout=30,
+    )
 
 
 def _convert(img: Image.Image, mode: str) -> Image.Image:

@@ -69,6 +69,48 @@ class ReviewSession:
             ]
             self._compositor.set_buttons(converted, states)
 
+    def _review_card(
+        self, rich_card: Any, entry: Any, state: SessionState, progress: str, sched: Any
+    ) -> bool:
+        """Run question+answer loop for one card. Returns True if user quit (btn_1)."""
+        # QUESTION
+        while True:
+            self._set_buttons(_QUESTION_BUTTONS)
+            self._render(fill_review(rich_card.question(), progress, _QUESTION_BUTTONS))
+            action = self._input.wait_for_action()
+            if action == "btn_1":
+                return True
+            if action == "btn_2":
+                break
+
+        # ANSWER
+        while True:
+            self._set_buttons(_ANSWER_BUTTONS)
+            self._render(fill_review(rich_card.answer(), progress, _ANSWER_BUTTONS))
+            action = self._input.wait_for_action()
+            if action == "btn_1":
+                return True
+            if action in _RATING_MAP:
+                answer = sched.build_answer(
+                    card=rich_card,
+                    states=entry.states,
+                    rating=_RATING_MAP[action],
+                )
+                sched.answer_card(answer)
+                state.review_count += 1
+                return False
+
+    def _show_done_screen(self, state: SessionState, elapsed_min: int) -> None:
+        """Render the session summary and wait for btn_1."""
+        summary = (
+            f"<p>Done! {state.review_count} cards reviewed"
+            f" in {elapsed_min} minutes.</p>"
+        )
+        self._render(fill_content(summary, has_statusbar=False, has_buttons=False))
+        while True:
+            if self._input.wait_for_action() == "btn_1":
+                return
+
     def run(self) -> None:
         state = SessionState()
 
@@ -98,51 +140,13 @@ class ReviewSession:
             state.current_card_index = i
             rich_card = col.get_card(entry.card.id)  # type: ignore[arg-type]
             rich_card.start_timer()
-            progress = f"{i + 1} / {total}"
-
-            # QUESTION
-            while True:
-                self._set_buttons(_QUESTION_BUTTONS)
-                self._render(
-                    fill_review(rich_card.question(), progress, _QUESTION_BUTTONS)
-                )
-                action = self._input.wait_for_action()
-                if action == "btn_1":
-                    self._client.sync_up()
-                    return
-                if action == "btn_2":
-                    break
-
-            # ANSWER
-            while True:
-                self._set_buttons(_ANSWER_BUTTONS)
-                self._render(fill_review(rich_card.answer(), progress, _ANSWER_BUTTONS))
-                action = self._input.wait_for_action()
-                if action == "btn_1":
-                    self._client.sync_up()
-                    return
-                if action in _RATING_MAP:
-                    answer = sched.build_answer(
-                        card=rich_card,
-                        states=entry.states,
-                        rating=_RATING_MAP[action],
-                    )
-                    sched.answer_card(answer)
-                    state.review_count += 1
-                    break
-
-        # DONE
-        elapsed_min = int((time.monotonic() - start_time) / 60)
-        summary = (
-            f"<p>Done! {state.review_count} cards reviewed"
-            f" in {elapsed_min} minutes.</p>"
-        )
-        self._render(fill_content(summary, has_statusbar=False, has_buttons=False))
-        while True:
-            action = self._input.wait_for_action()
-            if action == "btn_1":
+            if self._review_card(rich_card, entry, state, f"{i + 1} / {total}", sched):
                 self._client.sync_up()
                 return
+
+        elapsed_min = int((time.monotonic() - start_time) / 60)
+        self._show_done_screen(state, elapsed_min)
+        self._client.sync_up()
 
 
 def run_anki(display, input_handler, settings: dict, compositor=None) -> None:
