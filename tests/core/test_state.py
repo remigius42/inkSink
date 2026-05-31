@@ -88,6 +88,18 @@ def test_wifi_ssid_with_backslash(mocker):
     assert result == WifiStatus(connected=True, ssid=r"Back\slash", strength=60)
 
 
+def test_wifi_malformed_signal_row_skipped_next_valid_row_returned(mocker):
+    # A row with a non-integer signal field should be skipped, not abort the scan.
+    mocker.patch(
+        "inksink.core.state.subprocess.run",
+        return_value=mocker.Mock(
+            returncode=0, stdout="yes:HomeNet:bad\nyes:Fallback:45\n"
+        ),
+    )
+    result = wifi_status()
+    assert result == WifiStatus(connected=True, ssid="Fallback", strength=45)
+
+
 # --- ip_address ---
 
 
