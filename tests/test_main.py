@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 # Stub waveshare_epd before any display import
 _epd_stub = MagicMock()
-_epd_stub.epd7in5_V2.EPD.side_effect = lambda: MagicMock()
+_epd_stub.epd7in5_V2.EPD.side_effect = MagicMock
 sys.modules.setdefault("waveshare_epd", _epd_stub)
 sys.modules.setdefault("waveshare_epd.epd7in5_V2", _epd_stub.epd7in5_V2)
 

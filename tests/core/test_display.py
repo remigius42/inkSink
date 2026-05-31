@@ -9,7 +9,7 @@ from PIL import Image
 
 # Stub waveshare_epd before importing display
 _epd_stub = MagicMock()
-_epd_stub.epd7in5_V2.EPD.side_effect = lambda: MagicMock()
+_epd_stub.epd7in5_V2.EPD.side_effect = MagicMock
 sys.modules.setdefault("waveshare_epd", _epd_stub)
 sys.modules.setdefault("waveshare_epd.epd7in5_V2", _epd_stub.epd7in5_V2)
 
@@ -151,8 +151,6 @@ def test_display_raises_on_invalid_landscape_rotation():
 
 
 def test_portrait_image_rotated_to_800x480():
-    from PIL import Image
-
     d = _make_display(idle_timeout=9999, portrait_rotation=90, landscape_rotation=0)
     d.init()
     portrait_img = Image.new("1", (480, 800))
@@ -164,8 +162,6 @@ def test_portrait_image_rotated_to_800x480():
 
 
 def test_landscape_image_unchanged_at_zero_rotation():
-    from PIL import Image
-
     d = _make_display(idle_timeout=9999, portrait_rotation=90, landscape_rotation=0)
     d.init()
     landscape_img = Image.new("1", (800, 480))
@@ -178,8 +174,6 @@ def test_landscape_image_unchanged_at_zero_rotation():
 
 
 def test_landscape_image_rotated_180():
-    from PIL import Image
-
     d = _make_display(idle_timeout=9999, portrait_rotation=90, landscape_rotation=180)
     d.init()
     landscape_img = Image.new("1", (800, 480))
@@ -192,8 +186,6 @@ def test_landscape_image_rotated_180():
 
 
 def test_display_4gray_also_rotates():
-    from PIL import Image
-
     d = _make_display(idle_timeout=9999, portrait_rotation=90, landscape_rotation=0)
     d.init()
     portrait_img = Image.new("L", (480, 800))
