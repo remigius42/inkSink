@@ -12,3 +12,6 @@
 | [0008](0008-portrait-landscape-orientation.md) | Per-App display orientation; Core rotates image before driver handoff | Accepted |
 | [0009](0009-jinja2-layout-templates.md) | Jinja2 HTML layout templates with dedicated slots | Accepted |
 | [0010](0010-launcher-first-architecture.md) | Launcher-first architecture: dedicated Launcher App runs on boot | Accepted |
+| [0011](0011-anki-package-aarch64.md) | Use `anki` Python package on 64-bit aarch64 (supersedes ADR 0004) | Accepted |
+| [0012](0012-two-layer-rendering-pipeline.md) | Two-layer rendering pipeline: wkhtmltoimage content + Pillow chrome | Accepted |
+| [0013](0013-chrome-always-1bit.md) | Chrome (status bar, button bar) is always rendered in 1-bit | Accepted |
