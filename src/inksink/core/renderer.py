@@ -119,7 +119,7 @@ def render(
         with tempfile.NamedTemporaryFile(suffix=".png", dir=tmp, delete=False) as f:
             png_path = Path(f.name)
 
-        subprocess.run(
+        subprocess.run(  # nosec B603 — all args are hardcoded or internal; no user input  # noqa: S603
             [
                 binary,
                 "--enable-local-file-access",
@@ -157,11 +157,10 @@ def _convert(img: Image.Image, mode: str) -> Image.Image:
     if mode == "4gray":
         gray = img.convert("L")
         pixels = gray.load()
-        assert pixels is not None
         w, h = gray.size
         for y in range(h):
             for x in range(w):
-                v = cast(int, pixels[x, y])
-                pixels[x, y] = min(_4GRAY_LEVELS, key=lambda lv, _v=v: abs(lv - _v))
+                v = cast(int, pixels[x, y])  # type: ignore[union-attr]
+                pixels[x, y] = min(_4GRAY_LEVELS, key=lambda lv, _v=v: abs(lv - _v))  # type: ignore[union-attr]
         return gray
     raise ValueError(f"Unknown render mode: {mode!r}")

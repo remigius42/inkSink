@@ -37,12 +37,15 @@ target-version = "py313"
 exclude = ["vendor"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "D"]  # pycodestyle, pyflakes, isort, pydocstyle
+select = ["E", "F", "W", "I", "D", "S"]  # pycodestyle, pyflakes, isort, pydocstyle, bandit
 ignore = [
     "D100", "D101", "D102", "D103", "D104", "D105", "D106",  # missing-docstring rules not enforced by Codacy/Prospector
     "D203",  # conflicts with black (black enforces D211: no blank line before class docstring)
     "D213",  # conflicts with D212 — using D212 (summary on first line)
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/test_*.py" = ["S101", "S106", "S107", "S701"]
 
 [tool.pydocstyle]
 ignore = [
@@ -52,6 +55,7 @@ ignore = [
     "D407",  # not using numpy style
 ]
 
+# bandit runs via Codacy (not pre-commit); this config only applies there
 [tool.bandit.assert_used]
 skips = ["*/test_*.py"]
 

@@ -8,7 +8,9 @@ from anki.errors import SyncError, SyncErrorKind
 from inksink.anki.client import AnkiWebClient, AuthError
 
 
-def _settings(username="user@example.com", password="secret"):
+def _anki_credentials(
+    username="user@example.com", password="secret"  # nosec B106,B107 — test fixture
+):
     return {
         "apps": {
             "anki": {
@@ -21,7 +23,7 @@ def _settings(username="user@example.com", password="secret"):
 
 def _make_client(settings=None):
     if settings is None:
-        settings = _settings()
+        settings = _anki_credentials()
     mock_col = MagicMock()
     with patch("inksink.anki.client.Collection", return_value=mock_col):
         client = AnkiWebClient(settings)
@@ -34,13 +36,13 @@ def _make_client(settings=None):
 def test_empty_username_raises_auth_error():
     with patch("inksink.anki.client.Collection"):
         with pytest.raises(AuthError, match=r"config\.yml"):
-            AnkiWebClient(_settings(username="", password="secret"))
+            AnkiWebClient(_anki_credentials(username=""))
 
 
 def test_empty_password_raises_auth_error():
     with patch("inksink.anki.client.Collection"):
         with pytest.raises(AuthError, match=r"config\.yml"):
-            AnkiWebClient(_settings(username="user@example.com", password=""))
+            AnkiWebClient(_anki_credentials(password=""))  # nosec B106 — test fixture
 
 
 # ---- Behavior 2: bad credentials (anki raises) wrapped in AuthError ----
@@ -53,7 +55,7 @@ def test_bad_credentials_wrapped_in_auth_error():
     )
     with patch("inksink.anki.client.Collection", return_value=mock_col):
         with pytest.raises(AuthError):
-            AnkiWebClient(_settings())
+            AnkiWebClient(_anki_credentials())
     mock_col.close.assert_called_once()
 
 
@@ -64,7 +66,7 @@ def test_non_auth_sync_error_propagates():
     )
     with patch("inksink.anki.client.Collection", return_value=mock_col):
         with pytest.raises(SyncError):
-            AnkiWebClient(_settings())
+            AnkiWebClient(_anki_credentials())
 
 
 def test_non_auth_sync_error_closes_collection():
@@ -74,7 +76,7 @@ def test_non_auth_sync_error_closes_collection():
     )
     with patch("inksink.anki.client.Collection", return_value=mock_col):
         with pytest.raises(SyncError):
-            AnkiWebClient(_settings())
+            AnkiWebClient(_anki_credentials())
     mock_col.close.assert_called_once()
 
 
@@ -83,7 +85,7 @@ def test_unexpected_exception_closes_collection():
     mock_col.sync_login.side_effect = RuntimeError("unexpected")
     with patch("inksink.anki.client.Collection", return_value=mock_col):
         with pytest.raises(RuntimeError):
-            AnkiWebClient(_settings())
+            AnkiWebClient(_anki_credentials())
     mock_col.close.assert_called_once()
 
 

@@ -227,7 +227,7 @@ class Launcher:
         try:
             result = subprocess.run(
                 [
-                    "journalctl",
+                    "/usr/bin/journalctl",
                     "-u",
                     "inksink",
                     "-n",
