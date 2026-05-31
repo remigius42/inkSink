@@ -55,7 +55,7 @@ def test_app_layout_independent_of_core(tmp_path):
 
     app_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(app_layouts)),
-        autoescape=False,
+        autoescape=False,  # nosec B701  # nosemgrep — testing that templates render without autoescape
     )
     app_result = app_env.get_template("custom.html.j2").render(slot="hello")
 

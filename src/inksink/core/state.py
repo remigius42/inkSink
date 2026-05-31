@@ -41,7 +41,7 @@ _WIFI_SENTINEL = WifiStatus(connected=False, ssid=None, strength=-1)
 def wifi_status() -> WifiStatus:
     try:
         result = subprocess.run(
-            ["nmcli", "-t", "-f", "active,ssid,signal", "dev", "wifi"],
+            ["/usr/bin/nmcli", "-t", "-f", "active,ssid,signal", "dev", "wifi"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -160,7 +160,7 @@ class BluetoothStatus:
 def bluetooth_status() -> BluetoothStatus:
     try:
         show = subprocess.run(
-            ["bluetoothctl", "show"],
+            ["/usr/bin/bluetoothctl", "show"],
             capture_output=True,
             text=True,
             timeout=2,
@@ -174,7 +174,7 @@ def bluetooth_status() -> BluetoothStatus:
             return BluetoothStatus(enabled=False, connected_devices=[])
 
         devices_result = subprocess.run(
-            ["bluetoothctl", "devices", "Connected"],
+            ["/usr/bin/bluetoothctl", "devices", "Connected"],
             capture_output=True,
             text=True,
             timeout=2,
