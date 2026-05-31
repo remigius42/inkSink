@@ -93,7 +93,7 @@ def test_question_renders_card_front_with_progress():
 
     fill_calls: list[tuple] = []
 
-    def capture_fill(content, progress, buttons):
+    def capture_fill(content, progress):
         fill_calls.append((content, progress))
         return "<html/>"
 
@@ -193,7 +193,7 @@ def test_btn2_in_question_shows_answer():
 
     fill_calls: list[str] = []
 
-    def capture_fill(content, progress, buttons):
+    def capture_fill(content, progress):
         fill_calls.append(content)
         return "<html/>"
 
