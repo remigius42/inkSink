@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 ## Purpose
 
 The Launcher MENU screen is the entry point shown on boot. It displays registered

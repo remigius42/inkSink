@@ -2,7 +2,7 @@
 
 Physical grid (portrait, bottom edge of device):
 
-```
+```text
 [ btn_1 ][ btn_2 ][ btn_3 ][ btn_4 ]   ← top row
 [ btn_5 ][ btn_6 ][ btn_7 ][ btn_8 ]   ← bottom row
 ```
@@ -10,7 +10,7 @@ Physical grid (portrait, bottom edge of device):
 ## Labels per state
 
 | Button | MENU | STATUS | SETTINGS | LOGS |
-|--------|------|--------|----------|------|
+| --- | --- | --- | --- | --- |
 | btn_1 | *(blank — inactive)* | Menu | Menu | Menu |
 | btn_2 | Anki | | | |
 | btn_3 | *(next App)* | | | |

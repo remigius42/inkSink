@@ -37,7 +37,7 @@
 - [x] 3.4 Implement SYNCING state — show sync screen via `fill_fullscreen()`,
   call `sync_down()`; handle offline gracefully
 - [x] 3.5 Implement QUESTION state — fill `review.html.j2` with card front HTML
-  + progress ("N / M"); render with `orientation="portrait"`; `btn_2` advances
+  - progress ("N / M"); render with `orientation="portrait"`; `btn_2` advances
   to ANSWER; `btn_1` calls `sync_up()` then returns from `run()` (abandon
   session with sync); ignore other buttons
 - [x] 3.6 Implement ANSWER state — fill `review.html.j2` with card back HTML;

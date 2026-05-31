@@ -5,7 +5,7 @@ From the build guide. Maps directly to the module structure in
 
 ## Software Stack
 
-```
+```text
 ┌─────────────────────────────────┐
 │     Custom Python Application   │
 │   (Anki client + UI handler)    │  ← src/inksink/anki/app.py
@@ -26,7 +26,7 @@ From the build guide. Maps directly to the module structure in
 ## Five Main Components → Module Mapping
 
 | Build Guide Component | Module | Responsibility |
-| --------------------- | ------ | -------------- |
+| --- | --- | --- |
 | AnkiWeb API Client | `anki/client.py` | Fetch cards, submit reviews, offline queue |
 | Card Renderer | `core/renderer.py` | HTML → PNG → 1-bit via wkhtmltoimage + Pillow |
 | Display Manager | `core/display.py` | Waveshare driver, partial/full refresh |
@@ -35,7 +35,7 @@ From the build guide. Maps directly to the module structure in
 
 ## Card Rendering Pipeline
 
-```
+```text
 AnkiWeb API → Card JSON (question, answer, HTML, media)
     ↓
 HTML Template (with CSS, Kanji fonts)

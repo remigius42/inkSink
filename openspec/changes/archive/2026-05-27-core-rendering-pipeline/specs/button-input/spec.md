@@ -9,16 +9,16 @@
 be removed — PiSugar owns hardware power-on/off via its own button. Updated
 default mapping (8 buttons, 4×2 grid on bottom edge):
 
-| ID      | GPIO | Physical pin |
-| ------- | ---- | ------------ |
-| `btn_1` | 4    | 7            |
-| `btn_2` | 12   | 32           |
-| `btn_3` | 13   | 33           |
-| `btn_4` | 16   | 36           |
-| `btn_5` | 19   | 35           |
-| `btn_6` | 22   | 15           |
-| `btn_7` | 26   | 37           |
-| `btn_8` | 27   | 13           |
+| ID | GPIO | Physical pin |
+| --- | --- | --- |
+| `btn_1` | 4 | 7 |
+| `btn_2` | 12 | 32 |
+| `btn_3` | 13 | 33 |
+| `btn_4` | 16 | 36 |
+| `btn_5` | 19 | 35 |
+| `btn_6` | 22 | 15 |
+| `btn_7` | 26 | 37 |
+| `btn_8` | 27 | 13 |
 
 Pin selection rationale (see <https://pinout.xyz> for the full Pi Zero 2 W
 pinout):

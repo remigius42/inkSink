@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 ## Purpose
 
 Define the Python package structure for the inksink application, including the

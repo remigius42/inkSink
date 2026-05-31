@@ -1,3 +1,13 @@
-.claude/
-.gemini/
-openspec/
+# AI assistant scaffolding — generated files, not user content
+.claude/commands/opsx/**
+.claude/skills/openspec-**
+.gemini/commands/opsx/**
+.gemini/skills/openspec-**
+
+# Cannot wrap long lines in specs — the OpenSpec validator does not tolerate line breaks.
+# Spec files: MD013 is disabled inline per file via <!-- markdownlint-disable MD013 -->,
+# since Codacy does not support globs in ignore files.
+
+# Third-party and generated directories
+.venv/
+.pytest_cache/

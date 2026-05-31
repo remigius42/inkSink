@@ -68,7 +68,7 @@ cause `run()` to return immediately.
 
 - **WHEN** `btn_7` (Good) or any valid rating button is pressed in ANSWER state
 - **THEN** the review is recorded via `sched.build_answer(card, states, rating)`
-  + `sched.answer_card(answer)` (`CardAnswer.AGAIN=0`, `HARD=1`, `GOOD=2`,
+  - `sched.answer_card(answer)` (`CardAnswer.AGAIN=0`, `HARD=1`, `GOOD=2`,
   `EASY=3`) and the session advances to the next due card
 
 #### Scenario: btn_1 in ANSWER returns to Launcher

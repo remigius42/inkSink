@@ -41,7 +41,7 @@ guest/hotspot networks).
 
 ## Role directory structure (every role)
 
-```
+```text
 roles/<name>/
 ├── defaults/main.yml     ← role variables with defaults
 ├── handlers/main.yml     ← restart/reload handlers
