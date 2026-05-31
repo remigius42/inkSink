@@ -76,7 +76,7 @@ class ReviewSession:
         # QUESTION
         while True:
             self._set_buttons(_QUESTION_BUTTONS)
-            self._render(fill_review(rich_card.question(), progress, _QUESTION_BUTTONS))
+            self._render(fill_review(rich_card.question(), progress))
             action = self._input.wait_for_action()
             if action == "btn_1":
                 return True
@@ -86,7 +86,7 @@ class ReviewSession:
         # ANSWER
         while True:
             self._set_buttons(_ANSWER_BUTTONS)
-            self._render(fill_review(rich_card.answer(), progress, _ANSWER_BUTTONS))
+            self._render(fill_review(rich_card.answer(), progress))
             action = self._input.wait_for_action()
             if action == "btn_1":
                 return True
