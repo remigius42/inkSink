@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import locale
 from datetime import datetime
 from pathlib import Path
 
@@ -37,7 +38,7 @@ def fill_review(content: str, progress: str, buttons: list[str]) -> str:
         )
     wifi = wifi_status()
     battery = battery_percent()
-    now = datetime.now().strftime("%H:%M")
+    now = datetime.now().strftime(locale.nl_langinfo(locale.T_FMT))
     tmpl = _ENV.get_template("review.html.j2")
     return tmpl.render(
         content=content,

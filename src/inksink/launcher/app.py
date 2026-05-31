@@ -8,6 +8,7 @@ then returns. App exceptions propagate to __main__.py — no try/except here.
 from __future__ import annotations
 
 import html
+import locale
 import subprocess  # noqa: S404  # nosec B404 — subprocess is intentional; all calls use hardcoded system binaries
 from typing import Callable
 
@@ -158,7 +159,7 @@ class Launcher:
         stor = storage_info()
 
         return [
-            ("Time", datetime.now().strftime("%H:%M:%S")),
+            ("Time", datetime.now().strftime(locale.nl_langinfo(locale.T_FMT))),
             ("Battery", "unavailable" if battery == -1 else f"{battery}%"),
             (
                 "WiFi",

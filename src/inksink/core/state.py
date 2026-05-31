@@ -48,7 +48,11 @@ def _parse_wifi_line(line: str) -> WifiStatus | None:
         return None
     raw_ssid = line[first + 1 : last]
     ssid = raw_ssid.replace("\\:", ":").replace("\\\\", "\\") or None
-    return WifiStatus(connected=True, ssid=ssid, strength=int(line[last + 1 :]))
+    try:
+        strength = int(line[last + 1 :])
+    except ValueError:
+        return None
+    return WifiStatus(connected=True, ssid=ssid, strength=strength)
 
 
 def wifi_status() -> WifiStatus:
