@@ -279,68 +279,87 @@ def test_logs_no_rerender_when_btn7_clamped_at_top():
 # ---- Status screen: inactive buttons are silent no-ops ----
 
 
-def test_status_non_btn1_buttons_are_ignored_until_btn1():
-    """Non-btn_1 presses in STATUS state must not exit; only btn_1 returns."""
+def _patch_render_status_deps(launcher, *, wait_side_effect=("btn_1",)):
+    """Patch all _render_status dependencies; return (ExitStack, wait_mock)."""
     from contextlib import ExitStack
 
+    stack = ExitStack()
+    stack.enter_context(
+        patch("inksink.launcher.app.fill_content", return_value="<html/>")
+    )
+    stack.enter_context(patch("inksink.launcher.app.battery_percent", return_value=-1))
+    stack.enter_context(
+        patch(
+            "inksink.launcher.app.wifi_status",
+            return_value=MagicMock(connected=False),
+        )
+    )
+    stack.enter_context(patch("inksink.launcher.app.hostname", return_value="host"))
+    stack.enter_context(
+        patch("inksink.launcher.app.ip_address", return_value="unavailable")
+    )
+    stack.enter_context(
+        patch(
+            "inksink.launcher.app.bluetooth_status",
+            return_value=MagicMock(enabled=False, connected_devices=[]),
+        )
+    )
+    stack.enter_context(
+        patch("inksink.launcher.app.load_averages", return_value=(-1.0, -1.0, -1.0))
+    )
+    stack.enter_context(
+        patch("inksink.launcher.app.memory_info", return_value=MagicMock(total_mb=-1))
+    )
+    stack.enter_context(
+        patch(
+            "inksink.launcher.app.storage_info",
+            return_value=MagicMock(total_gb=-1.0),
+        )
+    )
+    stack.enter_context(
+        patch("inksink.launcher.app.version_info", return_value="unknown")
+    )
+    wait_mock = stack.enter_context(
+        patch.object(
+            launcher._input_handler,
+            "wait_for_action",
+            side_effect=list(wait_side_effect),
+        )
+    )
+    return stack, wait_mock
+
+
+def test_status_screen_shows_battery_percentage():
+    """Battery percentage appears in the content passed to fill_content."""
+    launcher = Launcher(_make_display(), _make_input([]), _settings(), MagicMock())
+    captured: list[str] = []
+
+    stack, _ = _patch_render_status_deps(launcher, wait_side_effect=["btn_1"])
+    with stack:
+        with (
+            patch("inksink.launcher.app.battery_percent", return_value=42),
+            patch(
+                "inksink.launcher.app.fill_content",
+                side_effect=lambda c, **_: captured.append(c) or "<html/>",
+            ),
+        ):
+            launcher._render_status()
+
+    assert any("42%" in c for c in captured)
+
+
+def test_status_non_btn1_buttons_are_ignored_until_btn1():
+    """Non-btn_1 presses in STATUS state must not exit; only btn_1 returns."""
     display = _make_display()
     launcher = Launcher(display, _make_input([]), _settings(), MagicMock())
 
-    with ExitStack() as stack:
-        stack.enter_context(
-            patch("inksink.launcher.app.fill_content", return_value="<html/>")
-        )
-        stack.enter_context(
-            patch("inksink.launcher.app.battery_percent", return_value=-1)
-        )
-        stack.enter_context(
-            patch(
-                "inksink.launcher.app.wifi_status",
-                return_value=MagicMock(connected=False),
-            )
-        )
-        stack.enter_context(patch("inksink.launcher.app.hostname", return_value="host"))
-        stack.enter_context(
-            patch("inksink.launcher.app.ip_address", return_value="unavailable")
-        )
-        stack.enter_context(
-            patch(
-                "inksink.launcher.app.bluetooth_status",
-                return_value=MagicMock(enabled=False, connected_devices=[]),
-            )
-        )
-        stack.enter_context(
-            patch(
-                "inksink.launcher.app.load_averages",
-                return_value=(-1.0, -1.0, -1.0),
-            )
-        )
-        stack.enter_context(
-            patch(
-                "inksink.launcher.app.memory_info",
-                return_value=MagicMock(total_mb=-1),
-            )
-        )
-        stack.enter_context(
-            patch(
-                "inksink.launcher.app.storage_info",
-                return_value=MagicMock(total_gb=-1.0),
-            )
-        )
-        stack.enter_context(
-            patch("inksink.launcher.app.version_info", return_value="unknown")
-        )
-        wait_mock = stack.enter_context(
-            patch.object(
-                launcher._input_handler,
-                "wait_for_action",
-                side_effect=["btn_5", "btn_6", "btn_7", "btn_8", "btn_1"],
-            )
-        )
-
+    stack, wait_mock = _patch_render_status_deps(
+        launcher, wait_side_effect=["btn_5", "btn_6", "btn_7", "btn_8", "btn_1"]
+    )
+    with stack:
         launcher._render_status()
 
-        assert wait_mock.call_count == 5
+    assert wait_mock.call_count == 5
 
 
 # ---- Logs screen: journal output appears in rendered content ----
@@ -369,6 +388,78 @@ def test_logs_content_shows_journalctl_output():
     content = " ".join(captured_content)
     assert "line1" in content
     assert "line2" in content
+
+
+# ---- _format_bluetooth ----
+
+
+def test_format_bluetooth_disabled():
+    from inksink.core.state import BluetoothStatus
+    from inksink.launcher.app import _format_bluetooth
+
+    bt = BluetoothStatus(enabled=False, connected_devices=[])
+    assert _format_bluetooth(bt) == "off"
+
+
+def test_format_bluetooth_enabled_no_devices():
+    from inksink.core.state import BluetoothStatus
+    from inksink.launcher.app import _format_bluetooth
+
+    bt = BluetoothStatus(enabled=True, connected_devices=[])
+    assert _format_bluetooth(bt) == "on"
+
+
+def test_format_bluetooth_enabled_with_devices():
+    from inksink.core.state import BluetoothStatus
+    from inksink.launcher.app import _format_bluetooth
+
+    bt = BluetoothStatus(enabled=True, connected_devices=["Headphones", "Keyboard"])
+    assert _format_bluetooth(bt) == "on — Headphones, Keyboard"
+
+
+def test_format_bluetooth_device_names_truncated_to_30():
+    from inksink.core.state import BluetoothStatus
+    from inksink.launcher.app import _format_bluetooth
+
+    long_name = "A" * 40
+    bt = BluetoothStatus(enabled=True, connected_devices=[long_name])
+    assert _format_bluetooth(bt) == f"on — {'A' * 30}"
+
+
+# ---- _next_scroll_offset ----
+
+
+def test_scroll_down_moves_offset_by_5():
+    from inksink.launcher.app import _next_scroll_offset
+
+    assert _next_scroll_offset("btn_6", 0, 20) == (5, True)
+
+
+def test_scroll_down_clamps_at_max():
+    from inksink.launcher.app import _next_scroll_offset
+
+    assert _next_scroll_offset("btn_6", 18, 20) == (20, True)
+    assert _next_scroll_offset("btn_6", 20, 20) == (20, False)
+
+
+def test_scroll_up_moves_offset_by_5():
+    from inksink.launcher.app import _next_scroll_offset
+
+    assert _next_scroll_offset("btn_7", 10, 20) == (5, True)
+
+
+def test_scroll_up_clamps_at_zero():
+    from inksink.launcher.app import _next_scroll_offset
+
+    assert _next_scroll_offset("btn_7", 3, 20) == (0, True)
+    assert _next_scroll_offset("btn_7", 0, 20) == (0, False)
+
+
+def test_scroll_unknown_action_no_change():
+    from inksink.launcher.app import _next_scroll_offset
+
+    assert _next_scroll_offset("btn_1", 5, 20) == (5, False)
+    assert _next_scroll_offset("btn_8", 5, 20) == (5, False)
 
 
 def test_apps_list_contains_anki_label():

@@ -38,9 +38,22 @@ class WifiStatus:
 _WIFI_SENTINEL = WifiStatus(connected=False, ssid=None, strength=-1)
 
 
+def _parse_wifi_line(line: str) -> WifiStatus | None:
+    """Parse one nmcli terse line (active:ssid:signal). Returns None if not active."""
+    first = line.index(":") if ":" in line else -1
+    last = line.rindex(":") if ":" in line else -1
+    if first == -1 or first == last:
+        return None
+    if line[:first] != "yes":
+        return None
+    raw_ssid = line[first + 1 : last]
+    ssid = raw_ssid.replace("\\:", ":").replace("\\\\", "\\") or None
+    return WifiStatus(connected=True, ssid=ssid, strength=int(line[last + 1 :]))
+
+
 def wifi_status() -> WifiStatus:
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603  # nosec B603 — hardcoded absolute path, no user input
             ["/usr/bin/nmcli", "-t", "-f", "active,ssid,signal", "dev", "wifi"],
             capture_output=True,
             text=True,
@@ -49,17 +62,9 @@ def wifi_status() -> WifiStatus:
         if result.returncode != 0:
             return _WIFI_SENTINEL
         for line in result.stdout.splitlines():
-            first = line.index(":") if ":" in line else -1
-            last = line.rindex(":") if ":" in line else -1
-            if first == -1 or first == last:
-                continue
-            active = line[:first]
-            if active != "yes":
-                continue
-            raw_ssid = line[first + 1 : last]
-            strength = int(line[last + 1 :])
-            ssid = raw_ssid.replace("\\:", ":").replace("\\\\", "\\") or None
-            return WifiStatus(connected=True, ssid=ssid, strength=strength)
+            parsed = _parse_wifi_line(line)
+            if parsed is not None:
+                return parsed
         return _WIFI_SENTINEL
     except (FileNotFoundError, OSError, subprocess.SubprocessError, ValueError):
         return _WIFI_SENTINEL
