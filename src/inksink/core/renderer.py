@@ -13,7 +13,7 @@ from __future__ import annotations
 import enum
 import hashlib
 import shutil
-import subprocess
+import subprocess  # noqa: S404  # nosec B404 — subprocess is intentional; all calls use hardcoded system binaries
 import tempfile
 from collections import OrderedDict
 from pathlib import Path
