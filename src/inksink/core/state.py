@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 import shutil
 import socket
-import subprocess
+import subprocess  # noqa: S404  # nosec B404 — subprocess is intentional; all calls use hardcoded system binaries
 from dataclasses import dataclass
 
 
@@ -159,7 +159,7 @@ class BluetoothStatus:
 
 def bluetooth_status() -> BluetoothStatus:
     try:
-        show = subprocess.run(
+        show = subprocess.run(  # noqa: S603  # nosec B603 — hardcoded absolute path, no user input
             ["/usr/bin/bluetoothctl", "show"],
             capture_output=True,
             text=True,
@@ -173,7 +173,7 @@ def bluetooth_status() -> BluetoothStatus:
         if not powered:
             return BluetoothStatus(enabled=False, connected_devices=[])
 
-        devices_result = subprocess.run(
+        devices_result = subprocess.run(  # noqa: S603  # nosec B603 — hardcoded absolute path, no user input
             ["/usr/bin/bluetoothctl", "devices", "Connected"],
             capture_output=True,
             text=True,

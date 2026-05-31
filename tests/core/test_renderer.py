@@ -1,7 +1,7 @@
 # spellchecker:ignore autouse getpixel tobytes putpixel
 
 import io
-import subprocess
+import subprocess  # noqa: S404  # nosec B404 — imported to mock subprocess.run in tests, not for live execution
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

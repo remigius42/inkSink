@@ -8,7 +8,7 @@ then returns. App exceptions propagate to __main__.py — no try/except here.
 from __future__ import annotations
 
 import html
-import subprocess
+import subprocess  # noqa: S404  # nosec B404 — subprocess is intentional; all calls use hardcoded system binaries
 from typing import Callable
 
 import inksink.anki.app as _anki_app
@@ -225,7 +225,7 @@ class Launcher:
 
     def _render_logs(self) -> None:
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603  # nosec B603 — hardcoded absolute path, no user input
                 [
                     "/usr/bin/journalctl",
                     "-u",
