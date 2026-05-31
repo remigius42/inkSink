@@ -1,18 +1,54 @@
+# spellchecker:ignore setdefault
+
 reviews:
   auto_review:
     auto_pause_after_reviewed_commits: 0
   path_instructions:
+    - path: "src/inksink/core/renderer.py"
+      instructions: >
+        str.format() only parses replacement fields in the template string, not
+        in substituted values — curly braces in values (e.g., CSS) are safe. Do
+        not flag str.format(content=html) as a KeyError/ValueError risk.
+
+        Do not suggest --disable-javascript for wkhtmltoimage — MathJax requires
+        JS for math notation. The correct local-file mitigation is
+        --enable-local-file-access --allow <tmp_dir>.
+    - path: "src/inksink/anki/layouts/**"
+      instructions: >
+        The e-ink display renders to a raster image — CSS scroll/overflow
+        properties have no runtime effect. Paging requires button-driven logic
+        and re-rendering, not a CSS change.
+    - path: "openspec/**/notes/*.md"
+      instructions: >
+        Implementation hint documents with non-production illustrative code. Do
+        not flag missing imports, incomplete snippets, missing error handling, or
+        other "not runnable as written" issues.
+    - path: "openspec/changes/**"
+      instructions: >
+        Specification documents for planned changes — referenced functions may
+        not exist yet. Never raise "missing implementation" or "function not
+        found" issues against these files.
     - path: "openspec/**"
       instructions: >
         Do not raise markdownlint violations for any file under this path.
-    - path: "openspec/**/notes/*.md"
+    - path: "src/**/*.py"
       instructions: >
-        Files under notes/ are implementation hint documents containing illustrative code
-        fragments intended to guide implementation. They are not expected to be fully functional
-        or production-ready. Do not flag missing imports, incomplete snippets, missing error
-        handling, or other "not runnable as written" issues.
+        Bare dict annotations (e.g., def f(x: dict) -> dict) are valid Python
+        and pass Pyright. Do not flag them as incomplete.
+    - path: "tests/**/*.py"
+      instructions: >
+        smbus2 is a required runtime dependency — patching smbus2.SMBus in tests
+        will not raise ModuleNotFoundError. Hardware-only packages (RPi,
+        RPi.GPIO, waveshare_epd) are never importable on dev/CI, so sys.modules
+        stubs for them are always safe. Do not flag sys.modules.setdefault for
+        these packages as an ordering concern.
     - path: "vendor/**/*.py"
       instructions: >
         Python files under vendor/ are third-party code that has been added to
         the project to simplify setup and packaging. They should not be changed,
         unless they have obvious errors.
+    - path: "**/*.md"
+      instructions: >
+        Backtick spans are rendered literally — angle-bracket placeholders like
+        <pin> inside backticks are not HTML and will not be stripped. Do not flag
+        them as needing escaping.
