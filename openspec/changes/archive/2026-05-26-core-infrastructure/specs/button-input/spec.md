@@ -5,14 +5,14 @@
 `input.py` SHALL define a mapping from GPIO BCM pin numbers to action names.
 Default mapping (from build guide):
 
-| Action        | GPIO |
-| ------------- | ---- |
-| `power`       | 4    |
-| `show_answer` | 12   |
-| `again`       | 13   |
-| `hard`        | 16   |
-| `good`        | 19   |
-| `easy`        | 26   |
+| Action | GPIO |
+| --- | --- |
+| `power` | 4 |
+| `show_answer` | 12 |
+| `again` | 13 |
+| `hard` | 16 |
+| `good` | 19 |
+| `easy` | 26 |
 
 The mapping SHALL be overridable via `config.yml`.
 

@@ -75,7 +75,7 @@ assembly; never changes during operation). The Compositor derives which screen
 edge is adjacent to the physical buttons from this value:
 
 | `portrait_rotation` (CCW) | Logical bottom maps to | Landscape button edge |
-|---|---|---|
+| --- | --- | --- |
 | 0 | bottom | bottom |
 | 90 | right | right |
 | 180 | top | top |

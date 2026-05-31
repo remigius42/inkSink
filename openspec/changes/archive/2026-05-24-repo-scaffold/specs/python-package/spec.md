@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 ## ADDED Requirements
 
 ### Requirement: Package is importable as `inksink`

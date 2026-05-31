@@ -1,0 +1,6 @@
+---
+exclude_paths:
+  - ".claude/commands/opsx/**"
+  - ".claude/skills/openspec-**"
+  - ".gemini/commands/opsx/**"
+  - ".gemini/skills/openspec-**"

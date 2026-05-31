@@ -5,13 +5,13 @@
 ### `fill_fullscreen(content: str) -> str`
 
 | Variable | Type | Description |
-|----------|------|-------------|
+| --- | --- | --- |
 | `content` | HTML string | Injected with `{{ content \| safe }}` |
 
 ### `fill_default(content: str, buttons: list[str]) -> str`
 
 | Variable | Type | Description |
-|----------|------|-------------|
+| --- | --- | --- |
 | `content` | HTML string | Injected with `{{ content \| safe }}` |
 | `buttons` | list of 8 strings | top row: `buttons[0]`–`buttons[3]` (btn_1–btn_4); bottom row: `buttons[4]`–`buttons[7]` (btn_5–btn_8) |
 | `status.time` | string | Auto-injected by Core (e.g. `"14:32"`) |
@@ -115,6 +115,7 @@ renderer sets the wkhtmltoimage `--width`/`--height` viewport from the
 resolved orientation dimensions; `100vw`/`100vh` adapt automatically.
 
 The `default` layout should reserve approximately:
+
 - Status bar: 24px (top)
 - Button bar: 80px (bottom, 2 rows × 4 columns × ~40px per row)
 - Content area: `calc(100vh - 104px)` (remainder)
