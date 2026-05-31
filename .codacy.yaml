@@ -4,3 +4,12 @@ exclude_paths:
   - ".claude/skills/openspec-**"
   - ".gemini/commands/opsx/**"
   - ".gemini/skills/openspec-**"
+
+engines:
+  agentlinter:
+    exclude_paths:
+      # CLAUDE.md and AGENTS.md are AI instruction files, not human-facing docs.
+      # AgentLinter flags false positives or offers bad advice in terms of
+      # overloading the agents instructions with persona, version stamps, etc.).
+      - "CLAUDE.md"
+      - "AGENTS.md"
