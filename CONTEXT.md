@@ -55,6 +55,13 @@ One instance exists for the process lifetime, instantiated at boot alongside
 `Display`. Timer loop refreshes the status bar every
 `display.status_refresh_interval` seconds (default 20 s) via a daemon thread.
 
+## Content Zone
+
+The portion of the screen allocated to App content. Height equals screen
+height minus the combined height of whichever chrome elements (status bar,
+button bar) are currently visible; equals full screen height when no chrome
+is shown.
+
 ## Core
 
 Shared infrastructure used by all Apps: display driver wrapper, GPIO input
@@ -100,6 +107,20 @@ An HTML Jinja2 template that defines the screen structure for a rendered App
 state. One built-in layout: `content` (`fill_content(content, has_statusbar, has_buttons)`)
 which reserves blank white regions for Pillow-rendered chrome.
 Apps may define their own layout templates in `<app>/layouts/`.
+
+## Scroll Offset
+
+The current vertical pixel displacement of the content viewport within the
+full content image. Runtime state owned by the Compositor; resets to 0
+whenever `set_content()` is called. Bounded by 0 (top) and
+`content_image_height − content_zone_height` (bottom). Never persisted to
+Config.
+
+## Scroll Step
+
+Pixels shifted per scroll button press. Configured at
+`display.vertical_scroll_step` (global default) with a per-App override at
+`apps.<name>.display.vertical_scroll_step`.
 
 ## Status Screen
 
