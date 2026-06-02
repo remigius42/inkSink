@@ -38,6 +38,23 @@ def _make_input(actions):
 # ---- Task 4.3: sleep ----
 
 
+def test_scroll_content_html_wrapper_has_explicit_height():
+    """Wrapper div must declare an explicit height.
+
+    Without it, bottom:0 indicators fall outside the compositor's visible crop
+    when content is taller than the viewport.
+    """
+    from inksink.launcher.app import (
+        _LINE_HEIGHT_PX,
+        _VISIBLE_LINES,
+        _scroll_content_html,
+    )
+
+    expected_h = _VISIBLE_LINES * _LINE_HEIGHT_PX
+    html = _scroll_content_html(["line"] * (_VISIBLE_LINES + 5), offset=0)
+    assert f"height:{expected_h}px" in html
+
+
 def test_btn8_calls_display_sleep_and_run_returns():
     display = _make_display()
     input_handler = _make_input(["btn_8"])

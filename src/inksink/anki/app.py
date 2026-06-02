@@ -52,12 +52,10 @@ class ReviewSession:
         self._compositor = compositor
 
     def _render(self, html: str) -> None:
+        image = renderer.render(html, mode=self._mode, orientation=self._orientation)
         if self._compositor is not None:
-            self._compositor.set_content(html)
+            self._compositor.set_content(image)
         else:
-            image = renderer.render(
-                html, mode=self._mode, orientation=self._orientation
-            )
             self._display.display_full(image)
 
     def _set_buttons(self, labels: list[str]) -> None:
@@ -106,7 +104,8 @@ class ReviewSession:
             f"<p>Done! {state.review_count} cards reviewed"
             f" in {elapsed_min} minutes.</p>"
         )
-        self._render(fill_content(summary, has_statusbar=False, has_buttons=False))
+        self._set_buttons(["Menu", "", "", "", "", "", "", ""])
+        self._render(fill_content(summary))
         while True:
             if self._input.wait_for_action() == "btn_1":
                 return
@@ -114,19 +113,12 @@ class ReviewSession:
     def run(self) -> None:
         state = SessionState()
 
-        self._render(
-            fill_content("<p>Syncing…</p>", has_statusbar=False, has_buttons=False)
-        )
+        self._set_buttons(["", "", "", "", "", "", "", ""])
+        self._render(fill_content("<p>Syncing…</p>"))
         self._client.sync_down()
         state.last_sync = datetime.now()
         if not wifi_status().connected:
-            self._render(
-                fill_content(
-                    "<p>Offline — using last sync</p>",
-                    has_statusbar=False,
-                    has_buttons=False,
-                )
-            )
+            self._render(fill_content("<p>Offline — using last sync</p>"))
             time.sleep(2)
 
         col = self._client.col
@@ -154,18 +146,15 @@ def run_anki(display, input_handler, settings: dict, compositor=None) -> None:
     try:
         client = AnkiWebClient(settings)
     except AuthError as exc:
-        html = fill_content(
-            f"<p>Anki auth error: {exc}</p>",
-            has_statusbar=False,
-            has_buttons=False,
+        html = fill_content(f"<p>Anki auth error: {exc}</p>")
+        image = renderer.render(
+            html,
+            mode=settings["apps"]["anki"].get("display_mode", "1bit"),
+            orientation=settings["apps"]["anki"].get("orientation", "portrait"),
         )
         if compositor is not None:
-            compositor.set_content(html)
+            compositor.set_content(image)
         else:
-            image = renderer.render(
-                html,
-                orientation=settings["apps"]["anki"].get("orientation", "portrait"),
-            )
             display.display_full(image)
         time.sleep(3)
         return

@@ -99,8 +99,9 @@ def _scroll_content_html(lines: list[str], offset: int) -> str:
 
     body = html.escape("\n".join(lines))
     pre_style = f"margin-top:-{top_px}px;font-size:{_LINE_HEIGHT_PX}px;"
+    viewport_h = _VISIBLE_LINES * _LINE_HEIGHT_PX
     return (
-        '<div style="position:relative;overflow:hidden;">'
+        f'<div style="position:relative;overflow:hidden;height:{viewport_h}px;">'
         f"{indicators}"
         f'<pre style="{pre_style}">{body}</pre>'
         "</div>"
@@ -116,7 +117,10 @@ class Launcher:
         self._compositor = compositor
 
     def _render_and_display(self, html_doc: str) -> None:
-        self._compositor.set_content(html_doc)
+        from inksink.core import renderer
+
+        image = renderer.render(html_doc, mode="1bit", orientation=self._orientation)
+        self._compositor.set_content(image)
 
     def _set_buttons(self, labels: list[str | None]) -> None:
         converted = [lbl if lbl != "" else None for lbl in labels]

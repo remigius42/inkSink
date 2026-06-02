@@ -21,13 +21,10 @@ def test_fill_review_no_live_chrome_in_html():
     assert "<button" not in result.lower()
 
 
-def test_fill_review_reserves_blank_chrome_regions():
+def test_fill_review_has_no_chrome_reservation():
     from inksink.anki.layout import PROGRESS_BAR_HEIGHT
-    from inksink.core.ui import BUTTON_BAR_SIZE, STATUS_BAR_HEIGHT
 
     result = fill_review("<p>Q</p>", "1 / 5")
-    assert "status-chrome" in result
-    assert "button-chrome" in result
-    assert str(STATUS_BAR_HEIGHT) in result
-    assert str(BUTTON_BAR_SIZE) in result
+    assert "status-chrome" not in result
+    assert "button-chrome" not in result
     assert str(PROGRESS_BAR_HEIGHT) in result

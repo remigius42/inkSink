@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Sequence
 from PIL import Image, ImageDraw
 
 from inksink.core.display import _PANEL_H, _PANEL_W
-from inksink.core.ui import ButtonState
+from inksink.core.ui import BUTTON_BAR_SIZE, STATUS_BAR_HEIGHT, ButtonState
 from inksink.core.ui.buttons import (
     _button_bar_edge,
     _compute_bounding_boxes,
@@ -40,11 +40,16 @@ class Compositor:
         self._status_interval = settings.get("display", {}).get(
             "status_refresh_interval", 20
         )
+        global_step = settings.get("display", {}).get("vertical_scroll_step", 50)
+        self._scroll_step: int = display_sub.get("vertical_scroll_step", global_step)
         self._timer: threading.Timer | None = None
         self._lock = threading.Lock()
         self._labels: list[str | None] = [""] * 8
         self._states: list[ButtonState] = [ButtonState.DEFAULT] * 8
         self._framebuffer = self._make_framebuffer()
+        self._content_image: Image.Image | None = None
+        self._scroll_offset: int = 0
+        self._status_bar_visible: bool = True
 
     def _make_framebuffer(self) -> Image.Image:
         if self._orientation == "portrait":
@@ -63,19 +68,29 @@ class Compositor:
     # Public API
     # ------------------------------------------------------------------
 
-    def set_content(self, html: str) -> None:
-        from inksink.core import renderer
+    def set_status_bar_visible(self, visible: bool) -> None:
+        """Set whether the status bar is drawn. Does not trigger a display refresh.
 
-        img = renderer.render(
-            html, mode=self._display_mode, orientation=self._orientation
-        )
+        The caller must follow this with set_content() to make the change visible.
+        This keeps the contract simple: chrome state changes take effect on the next
+        full content render, not as an independent display event.
+        """
         with self._lock:
-            self._framebuffer = img.convert("1")
-            self._redraw_chrome()
-            if self._display_mode == "4gray":
-                self._display.display_4gray(self._framebuffer)
-            else:
-                self._display.display_full(self._framebuffer)
+            self._status_bar_visible = visible
+
+    def set_content(self, img: Image.Image) -> None:
+        with self._lock:
+            self._content_image = img
+            self._scroll_offset = 0
+            self._compose_and_display(full_refresh=True)
+
+    def scroll_down(self) -> tuple[bool, bool]:
+        with self._lock:
+            return self._scroll(+self._scroll_step)
+
+    def scroll_up(self) -> tuple[bool, bool]:
+        with self._lock:
+            return self._scroll(-self._scroll_step)
 
     def set_buttons(
         self,
@@ -112,9 +127,51 @@ class Compositor:
     # Internal rendering
     # ------------------------------------------------------------------
 
+    def _scroll(self, delta: int) -> tuple[bool, bool]:
+        """Shift scroll offset by delta; re-compose if changed. Call under lock."""
+        if self._content_image is None:
+            return False, False
+        cz_h = self._content_zone_height()
+        max_offset = max(0, self._content_image.height - cz_h)
+        new_offset = max(0, min(self._scroll_offset + delta, max_offset))
+        if new_offset == self._scroll_offset:
+            return (self._scroll_offset > 0), (self._scroll_offset < max_offset)
+        self._scroll_offset = new_offset
+        self._compose_and_display(full_refresh=False)
+        return (self._scroll_offset > 0), (self._scroll_offset < max_offset)
+
+    def _content_zone_height(self) -> int:
+        h = self._fb_height()
+        if self._status_bar_visible:
+            h -= STATUS_BAR_HEIGHT
+        if any(lbl != "" for lbl in self._labels):
+            h -= BUTTON_BAR_SIZE
+        return max(h, 0)
+
+    def _compose_and_display(self, full_refresh: bool) -> None:
+        """Crop content image into framebuffer and refresh. Call under lock."""
+        self._framebuffer = self._make_framebuffer()
+        if self._content_image is not None:
+            cz_h = self._content_zone_height()
+            src = self._content_image
+            crop_bottom = min(self._scroll_offset + cz_h, src.height)
+            cropped = src.crop((0, self._scroll_offset, src.width, crop_bottom))
+            converted = cropped.convert("1")
+            content_y = STATUS_BAR_HEIGHT if self._status_bar_visible else 0
+            self._framebuffer.paste(converted, (0, content_y))
+        self._redraw_chrome()
+        if full_refresh:
+            if self._display_mode == "4gray":
+                self._display.display_4gray(self._framebuffer)
+            else:
+                self._display.display_full(self._framebuffer)
+        else:
+            self._display.display_partial(self._framebuffer)
+
     def _redraw_chrome(self) -> None:
         draw = ImageDraw.Draw(self._framebuffer)
-        _draw_status_bar(draw, self._fb_width())
+        if self._status_bar_visible:
+            _draw_status_bar(draw, self._fb_width())
         self._redraw_buttons(draw=draw)
 
     def _redraw_buttons(self, draw: ImageDraw.ImageDraw | None = None) -> None:
