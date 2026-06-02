@@ -12,14 +12,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100vw;
-      height: 100vh;
-      overflow: hidden;
       font-family: 'Noto Sans', 'Noto Sans CJK JP', sans-serif;
       font-size: 14px;
-    }
-    .status-chrome {
-      width: 100vw;
-      height: {{ status_bar_height }}px;
     }
     .progress {
       width: 100vw;
@@ -34,20 +28,12 @@
     }
     .content {
       width: 100vw;
-      height: calc(100vh - {{ status_bar_height }}px - {{ progress_bar_height }}px - {{ button_bar_size }}px);
-      overflow: hidden;
       padding: 8px;
-    }
-    .button-chrome {
-      width: 100vw;
-      height: {{ button_bar_size }}px;
     }
   </style>
 </head>
 <body>
-  <div class="status-chrome"></div>
   <div class="progress">{{ progress }}</div>
   <div class="content">{{ content | safe }}</div>
-  <div class="button-chrome"></div>
 </body>
 </html>

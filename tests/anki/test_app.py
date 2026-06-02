@@ -463,6 +463,7 @@ def test_compositor_path_calls_set_content_and_set_buttons():
     compositor = MagicMock()
 
     with (
+        patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
         patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
         patch("inksink.anki.app.wifi_status", return_value=MagicMock(connected=True)),
@@ -494,6 +495,84 @@ def test_compositor_path_calls_set_content_and_set_buttons():
                 ), f"labeled slot must be DEFAULT, got {state}"
 
 
+def test_done_screen_sets_menu_button_not_stale_review_buttons():
+    """Done screen must not carry stale Again/Hard/Good/Easy buttons from review."""
+    client = _make_client(card_ids=[1])
+    ih = MagicMock()
+    ih.wait_for_action.side_effect = ["btn_2", "btn_7", "btn_1"]  # Good → done → Menu
+
+    compositor = MagicMock()
+
+    with (
+        patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
+        patch("inksink.anki.app.fill_review", return_value="<html/>"),
+        patch("inksink.anki.app.wifi_status", return_value=MagicMock(connected=True)),
+        patch("inksink.anki.app.time.sleep"),
+    ):
+        ReviewSession(client, MagicMock(), ih, _settings(), compositor).run()
+
+    # The last set_buttons call must be the done screen's — no review action labels.
+    last_labels = compositor.set_buttons.call_args_list[-1].args[0]
+    review_labels = {"Again", "Hard", "Good", "Easy"}
+    assert not any(lbl in review_labels for lbl in last_labels if lbl)
+    assert last_labels[0] == "Menu"
+
+
+def test_syncing_screen_has_no_buttons():
+    """Syncing/offline transient screens must clear stale buttons from a prior run."""
+    client = _make_client(card_ids=[])
+    ih = MagicMock()
+    ih.wait_for_action.return_value = "btn_1"
+
+    compositor = MagicMock()
+
+    with (
+        patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
+        patch("inksink.anki.app.fill_review", return_value="<html/>"),
+        patch("inksink.anki.app.wifi_status", return_value=MagicMock(connected=False)),
+        patch("inksink.anki.app.time.sleep"),
+    ):
+        ReviewSession(client, MagicMock(), ih, _settings(), compositor).run()
+
+    # set_buttons must be called for the syncing screen, clearing all labels.
+    assert compositor.set_buttons.call_count > 0
+    first_call_labels = compositor.set_buttons.call_args_list[0].args[0]
+    assert all(lbl is None for lbl in first_call_labels)
+
+
+def test_run_anki_auth_error_uses_configured_display_mode():
+    """Auth error render must use the app's configured display_mode, not the default."""
+    from inksink.anki.app import run_anki
+
+    settings = {
+        "apps": {
+            "anki": {
+                "orientation": "portrait",
+                "display_mode": "4gray",
+                "ankiweb_username": "",
+                "ankiweb_password": "",
+            }
+        }
+    }
+    render_calls: list[dict] = []
+
+    def capture_render(html, mode="1bit", orientation="portrait"):
+        render_calls.append({"mode": mode})
+        return _fake_image()
+
+    with (
+        patch("inksink.anki.app.renderer.render", side_effect=capture_render),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
+        patch("inksink.anki.app.time.sleep"),
+    ):
+        run_anki(MagicMock(), MagicMock(), settings)
+
+    assert render_calls, "renderer.render must be called on auth error"
+    assert all(c["mode"] == "4gray" for c in render_calls)
+
+
 def test_run_anki_does_not_stop_injected_compositor():
     """run_anki must not stop a compositor it didn't create."""
     from inksink.anki.app import run_anki
@@ -515,6 +594,7 @@ def test_run_anki_does_not_stop_injected_compositor():
 
     with (
         patch("inksink.anki.app.AnkiWebClient") as mock_client_cls,
+        patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
         patch("inksink.anki.app.fill_content", return_value="<html/>"),
         patch("inksink.anki.app.fill_review", return_value="<html/>"),
         patch("inksink.anki.app.wifi_status", return_value=MagicMock(connected=True)),

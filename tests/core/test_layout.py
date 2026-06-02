@@ -14,36 +14,10 @@ def test_fill_content_returns_complete_html():
     assert "<p>Hello</p>" in result
 
 
-def test_fill_content_with_both_false_no_chrome():
-    result = fill_content("<p>content</p>", has_statusbar=False, has_buttons=False)
+def test_fill_content_has_no_chrome_reservation():
+    result = fill_content("<p>content</p>")
     assert "button-chrome" not in result
     assert "status-chrome" not in result
-
-
-def test_fill_content_defaults_reserve_chrome_regions():
-    from inksink.core.ui import BUTTON_BAR_SIZE, STATUS_BAR_HEIGHT
-
-    result = fill_content("<p>Card</p>")
-    assert str(STATUS_BAR_HEIGHT) in result
-    assert str(BUTTON_BAR_SIZE) in result
-
-
-def test_fill_content_no_statusbar_omits_status_region():
-    from inksink.core.ui import STATUS_BAR_HEIGHT
-
-    with_status = fill_content("<p>x</p>", has_statusbar=True)
-    without_status = fill_content("<p>x</p>", has_statusbar=False)
-    assert str(STATUS_BAR_HEIGHT) in with_status
-    assert str(STATUS_BAR_HEIGHT) not in without_status
-
-
-def test_fill_content_no_buttons_omits_button_region():
-    from inksink.core.ui import BUTTON_BAR_SIZE
-
-    with_buttons = fill_content("<p>x</p>", has_buttons=True)
-    without_buttons = fill_content("<p>x</p>", has_buttons=False)
-    assert str(BUTTON_BAR_SIZE) in with_buttons
-    assert str(BUTTON_BAR_SIZE) not in without_buttons
 
 
 def test_app_layout_independent_of_core(tmp_path):

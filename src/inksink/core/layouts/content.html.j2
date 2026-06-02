@@ -12,35 +12,14 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100vw;
-      height: 100vh;
-      overflow: hidden;
       font-family: 'Noto Sans', 'Noto Sans CJK JP', sans-serif;
     }
-    {% if has_statusbar %}
-    .status-chrome {
-      width: 100vw;
-      height: {{ status_bar_height }}px;
-    }
-    {% endif %}
     .content {
       width: 100vw;
-      height: calc(100vh
-        {% if has_statusbar %} - {{ status_bar_height }}px {% endif %}
-        {% if has_buttons %} - {{ button_bar_size }}px {% endif %}
-      );
-      overflow: hidden;
     }
-    {% if has_buttons %}
-    .button-chrome {
-      width: 100vw;
-      height: {{ button_bar_size }}px;
-    }
-    {% endif %}
   </style>
 </head>
 <body>
-  {% if has_statusbar %}<div class="status-chrome"></div>{% endif %}
   <div class="content">{{ content | safe }}</div>
-  {% if has_buttons %}<div class="button-chrome"></div>{% endif %}
 </body>
 </html>

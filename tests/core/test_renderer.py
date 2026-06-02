@@ -31,8 +31,10 @@ def clear_renderer_cache():
     from inksink.core import renderer
 
     renderer.configure(max_size=100)
+    renderer._max_image_height = 8000
     yield
     renderer.configure(max_size=100)
+    renderer._max_image_height = 8000
 
 
 @pytest.fixture(autouse=True)
@@ -306,6 +308,57 @@ def test_configure_from_settings_applies_cache_max_size():
     with patch("subprocess.run", stub):
         renderer.render("<p>a</p>", mode="1bit")  # must re-render
     assert stub.call_count == 4
+
+
+def test_render_does_not_pass_height_flag_to_wkhtmltoimage():
+    from inksink.core.renderer import render
+
+    stub = MagicMock(side_effect=_stub_wkhtmltoimage(_make_png_bytes(480, 800)))
+    with patch("subprocess.run", stub):
+        render("<p>hi</p>", mode="1bit")
+    args = stub.call_args[0][0]
+    assert "--height" not in args
+
+
+def test_render_returns_natural_height_not_panel_height():
+    from inksink.core.renderer import Orientation, render
+
+    tall_png = _make_png_bytes(480, 1600)
+    with patch("subprocess.run", side_effect=_stub_wkhtmltoimage(tall_png)):
+        img = render("<p>tall</p>", mode="1bit", orientation=Orientation.PORTRAIT)
+    assert img.size == (480, 1600)
+
+
+def test_render_truncates_image_exceeding_max_height_with_warning():
+    import warnings
+
+    from inksink.core import renderer
+
+    renderer.configure_from_settings(
+        {"renderer": {"cache_max_size": 100, "max_image_height": 400}}
+    )
+    tall_png = _make_png_bytes(480, 800)
+    with patch("subprocess.run", side_effect=_stub_wkhtmltoimage(tall_png)):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            img = renderer.render("<p>tall</p>", mode="1bit")
+    assert img.size[1] == 400
+    assert len(w) == 1
+    assert "max_image_height" in str(w[0].message)
+    assert "800" in str(w[0].message)  # actual height
+    assert "400" in str(w[0].message)  # cap
+
+
+def test_render_does_not_truncate_image_within_max_height():
+    from inksink.core import renderer
+
+    renderer.configure_from_settings(
+        {"renderer": {"cache_max_size": 100, "max_image_height": 8000}}
+    )
+    png = _make_png_bytes(480, 800)
+    with patch("subprocess.run", side_effect=_stub_wkhtmltoimage(png)):
+        img = renderer.render("<p>ok</p>", mode="1bit")
+    assert img.size[1] == 800
 
 
 def test_configure_replaces_cache_and_enforces_new_limit():

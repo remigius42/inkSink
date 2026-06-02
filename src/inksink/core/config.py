@@ -16,8 +16,9 @@ DEFAULTS: dict = {
         "landscape_rotation": 0,
         "full_refresh_interval": 20,
         "status_refresh_interval": 20,
+        "vertical_scroll_step": 50,
     },
-    "renderer": {"cache_max_size": 100},
+    "renderer": {"cache_max_size": 100, "max_image_height": 8000},
     "apps": {
         "anki": {
             "display_mode": "1bit",

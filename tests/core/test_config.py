@@ -67,3 +67,13 @@ def test_defaults_include_anki_credential_keys():
     assert "ankiweb_password" in anki
     assert anki["ankiweb_username"] == ""
     assert anki["ankiweb_password"] == ""
+
+
+def test_defaults_include_vertical_scroll_step():
+    result = load_settings(path="/nonexistent/path/config.yml")
+    assert result["display"]["vertical_scroll_step"] == 50
+
+
+def test_defaults_include_renderer_max_image_height():
+    result = load_settings(path="/nonexistent/path/config.yml")
+    assert result["renderer"]["max_image_height"] == 8000

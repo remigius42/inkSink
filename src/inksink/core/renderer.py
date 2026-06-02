@@ -60,6 +60,7 @@ class _LRUCache:
 
 
 _cache = _LRUCache(_DEFAULT_CACHE_MAX_SIZE)
+_max_image_height: int = 8000
 
 
 def configure(max_size: int = _DEFAULT_CACHE_MAX_SIZE) -> None:
@@ -70,7 +71,9 @@ def configure(max_size: int = _DEFAULT_CACHE_MAX_SIZE) -> None:
 
 def configure_from_settings(settings: dict) -> None:
     """Apply renderer config from a settings dict (as returned by load_settings())."""
+    global _max_image_height
     configure(max_size=settings["renderer"]["cache_max_size"])
+    _max_image_height = settings["renderer"].get("max_image_height", 8000)
 
 
 _4GRAY_LEVELS = [0, 85, 170, 255]
@@ -97,7 +100,7 @@ def render(
         raise ValueError(f"Unknown render mode: {mode!r}; expected '1bit' or '4gray'")
 
     orientation = Orientation(orientation)
-    width, height = _ORIENTATION_DIMS[orientation]
+    width, _ = _ORIENTATION_DIMS[orientation]
 
     key = (hashlib.sha256(html.encode()).hexdigest(), mode, str(orientation))
     cached = _cache.get(key)
@@ -108,18 +111,19 @@ def render(
     if binary is None:
         raise RuntimeError("wkhtmltoimage not found on PATH")
 
-    converted = _render_html_to_image(binary, html, mode, width, height)
+    converted = _render_html_to_image(binary, html, mode, width)
     _cache.put(key, converted.copy())
     return converted
 
 
-def _render_html_to_image(
-    binary: str, html: str, mode: str, width: int, height: int
-) -> Image.Image:
+def _render_html_to_image(binary: str, html: str, mode: str, width: int) -> Image.Image:
     """Write html to a temp file, shell out to wkhtmltoimage, return PIL image."""
+    import warnings
+
     tmp = tempfile.gettempdir()
     html_path: Path | None = None
     png_path: Path | None = None
+    cache_key = hashlib.sha256(html.encode()).hexdigest()
     try:
         with tempfile.NamedTemporaryFile(suffix=".html", dir=tmp, delete=False) as f:
             html_path = Path(f.name)
@@ -128,11 +132,20 @@ def _render_html_to_image(
         with tempfile.NamedTemporaryFile(suffix=".png", dir=tmp, delete=False) as f:
             png_path = Path(f.name)
 
-        _invoke_wkhtmltoimage(binary, tmp, html_path, png_path, width, height)
+        _invoke_wkhtmltoimage(binary, tmp, html_path, png_path, width)
 
         with Image.open(png_path) as raw:
-            img = raw.convert("RGB").resize((width, height))
-        return _convert(img, mode)
+            img = raw.convert("RGB")
+        converted = _convert(img, mode)
+        if converted.height > _max_image_height:
+            warnings.warn(
+                f"Rendered image height {converted.height}px exceeds "
+                f"max_image_height {_max_image_height}px "
+                f"(content hash: {cache_key}); truncating.",
+                stacklevel=4,
+            )
+            converted = converted.crop((0, 0, converted.width, _max_image_height))
+        return converted
     finally:
         if html_path and html_path.exists():
             html_path.unlink()
@@ -141,7 +154,7 @@ def _render_html_to_image(
 
 
 def _invoke_wkhtmltoimage(
-    binary: str, tmp: str, html_path: Path, png_path: Path, width: int, height: int
+    binary: str, tmp: str, html_path: Path, png_path: Path, width: int
 ) -> None:
     subprocess.run(  # nosec B603 — all args are hardcoded or internal; no user input  # noqa: S603
         [
@@ -151,8 +164,6 @@ def _invoke_wkhtmltoimage(
             tmp,
             "--width",
             str(width),
-            "--height",
-            str(height),
             "--encoding",
             "utf-8",
             str(html_path),

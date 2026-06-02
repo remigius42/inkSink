@@ -3,8 +3,8 @@
 """Jinja2-based layout filling for Core display layouts.
 
 Provides fill_content() and fill_error() which return complete HTML documents
-ready for renderer.render(). Chrome regions (status bar, button bar) are blank
-space — the Compositor renders them via Pillow.
+ready for renderer.render(). Templates render pure content; chrome placement
+is the Compositor's responsibility.
 """
 
 from __future__ import annotations
@@ -14,8 +14,6 @@ from pathlib import Path
 
 import jinja2
 
-from inksink.core.ui import BUTTON_BAR_SIZE, STATUS_BAR_HEIGHT
-
 _LAYOUTS_DIR = Path(__file__).parent / "layouts"
 _ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(str(_LAYOUTS_DIR)),
@@ -23,24 +21,13 @@ _ENV = jinja2.Environment(
 )
 
 
-def fill_content(
-    content: str,
-    has_statusbar: bool = True,
-    has_buttons: bool = True,
-) -> str:
-    """Return a complete HTML document reserving blank chrome regions.
+def fill_content(content: str) -> str:
+    """Return a complete HTML document with pure content at full panel width.
 
-    Chrome (status bar, button bar) is rendered by the Compositor via Pillow;
-    the template only reserves blank space of the correct size.
+    Chrome (status bar, button bar) is placed by the Compositor via Pillow.
     """
     tmpl = _ENV.get_template("content.html.j2")
-    return tmpl.render(
-        content=content,
-        has_statusbar=has_statusbar,
-        has_buttons=has_buttons,
-        status_bar_height=STATUS_BAR_HEIGHT,
-        button_bar_size=BUTTON_BAR_SIZE,
-    )
+    return tmpl.render(content=content)
 
 
 def fill_error(message: str) -> str:
@@ -52,4 +39,4 @@ def fill_error(message: str) -> str:
         f"<p>Press any button to continue…</p>"
         f"</div>"
     )
-    return fill_content(content, has_statusbar=False, has_buttons=False)
+    return fill_content(content)
