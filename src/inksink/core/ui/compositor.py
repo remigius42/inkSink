@@ -44,8 +44,9 @@ class Compositor:
         self._scroll_step: int = display_sub.get("vertical_scroll_step", global_step)
         self._timer: threading.Timer | None = None
         self._lock = threading.Lock()
-        self._labels: list[str | None] = [""] * 8
+        self._labels: list[str | None] = [None] * 8
         self._states: list[ButtonState] = [ButtonState.DEFAULT] * 8
+        self._buttons_set: bool = False
         self._framebuffer = self._make_framebuffer()
         self._content_image: Image.Image | None = None
         self._scroll_offset: int = 0
@@ -67,6 +68,18 @@ class Compositor:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+
+    def content_zone_height(self) -> int:
+        """Return the pixel height available to App content."""
+        return self._content_zone_height()
+
+    def content_zone_width(self) -> int:
+        """Return the pixel width available to App content."""
+        w = self._fb_width()
+        edge = _button_bar_edge(self._portrait_rotation, self._orientation)
+        if edge in ("left", "right") and self._buttons_set:
+            w -= BUTTON_BAR_SIZE
+        return max(w, 0)
 
     def set_status_bar_visible(self, visible: bool) -> None:
         """Set whether the status bar is drawn. Does not trigger a display refresh.
@@ -105,6 +118,7 @@ class Compositor:
         with self._lock:
             self._labels = list(labels)
             self._states = [s for s in states]
+            self._buttons_set = True
             self._redraw_buttons()
         self._display.display_partial(self._framebuffer)
 
@@ -144,7 +158,8 @@ class Compositor:
         h = self._fb_height()
         if self._status_bar_visible:
             h -= STATUS_BAR_HEIGHT
-        if any(lbl != "" for lbl in self._labels):
+        edge = _button_bar_edge(self._portrait_rotation, self._orientation)
+        if edge in ("top", "bottom") and self._buttons_set:
             h -= BUTTON_BAR_SIZE
         return max(h, 0)
 
@@ -175,7 +190,7 @@ class Compositor:
         self._redraw_buttons(draw=draw)
 
     def _redraw_buttons(self, draw: ImageDraw.ImageDraw | None = None) -> None:
-        if not any(lbl != "" for lbl in self._labels):
+        if not self._buttons_set:
             return
         if draw is None:
             draw = ImageDraw.Draw(self._framebuffer)

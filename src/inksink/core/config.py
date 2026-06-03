@@ -32,6 +32,12 @@ DEFAULTS: dict = {
             "orientation": "portrait",
             "display": {"double_vertical_button_size": False},
         },
+        "weather": {
+            "orientation": "landscape",
+            "locations": [],
+            "cycle_speed_seconds": 30,
+            "location_shortcuts": [0, 1, 2, 3],
+        },
     },
 }
 

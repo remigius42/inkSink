@@ -5,7 +5,7 @@ name = "inksink"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
-    "Pillow",
+    "Pillow>=12.1.0",  # get_flattened_data() added in 12.1.0, used in tests/weather/test_overlay.py
     "PyYAML>=6.0,<7.0",
     "Jinja2>=3.0",
     "requests",

@@ -90,10 +90,30 @@ regardless of whether a label was configured.
 
 ### Compositor landscape height fix
 
-`_content_zone_height()` SHALL only subtract `BUTTON_BAR_SIZE` from height when
-`_button_bar_edge()` returns `"top"` or `"bottom"`. When the edge is `"left"` or
-`"right"`, the button bar reduces the content zone width (handled by
-`_compute_bounding_boxes`), not its height.
+`content_zone_height()` SHALL only subtract `BUTTON_BAR_SIZE` from height when
+the button bar edge is `"top"` or `"bottom"`. When the edge is `"left"` or
+`"right"`, the button bar reduces the content zone width (via
+`content_zone_width()`), not its height.
+
+### Public content zone API
+
+`Compositor` exposes `content_zone_height() -> int` and `content_zone_width() ->
+int` as public methods. Apps use these to size their content images; they do not
+access private compositor internals. `content_zone_width()` subtracts
+`BUTTON_BAR_SIZE` when the button bar is on a side edge (`left`/`right`),
+mirroring the height logic for top/bottom bars.
+
+### Single-location and empty-locations behavior
+
+With exactly one location configured, Prev (btn_2) and Next (btn_4) are rendered
+as `None` (invisible). The cycle timer still fires at `cycle_speed_seconds` — it
+wraps back to index 0, re-fetching and re-rendering the same location. This
+makes the cycle interval serve as the refresh interval with no special-casing in
+the advance logic.
+
+With zero locations configured, the app renders a PIL "No weather locations
+configured." message inline, shows only btn_1 (Menu), and returns immediately on
+any button press.
 
 ### Cycling state machine
 

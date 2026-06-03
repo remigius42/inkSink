@@ -138,10 +138,25 @@ directly to that location and reset the cycle timer.
 - `cycle_speed_seconds`: int, default `30`
 - `location_shortcuts`: list of up to 4 location indices, default `[0, 1, 2, 3]`
 
-#### Scenario: Minimal config with one location
+#### Scenario: Minimal config with one location — cycling acts as periodic refresh
 
 - **WHEN** config contains only `apps.weather.locations: [{location: "Zürich"}]`
-- **THEN** the app launches, shows Zürich, and cycles (no-op with one location)
+- **THEN** the app launches, shows Zürich, and the cycle timer fires every
+  `cycle_speed_seconds` to re-fetch and re-render the same location (periodic
+  refresh). Prev (btn_2) and Next (btn_4) are rendered as `None` (invisible).
+  Pause/Resume (btn_3) remains functional.
+
+#### Scenario: Single location hides Prev and Next buttons
+
+- **WHEN** exactly one location is configured
+- **THEN** btn_2 (Prev) and btn_4 (Next) are `None`; btn_3 (Pause/Resume) is
+  visible
+
+#### Scenario: No locations configured shows informative message
+
+- **WHEN** `apps.weather.locations` is empty or absent
+- **THEN** the display shows "No weather locations configured." and only btn_1
+  (Menu) is visible; pressing any button returns to the Launcher
 
 #### Scenario: Custom shortcuts respected
 
