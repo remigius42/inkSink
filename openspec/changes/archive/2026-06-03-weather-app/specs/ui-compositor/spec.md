@@ -47,19 +47,19 @@ from the height.
 #### Scenario: Portrait subtracts button bar from height
 
 - **WHEN** orientation is `PORTRAIT` and buttons are visible
-- **THEN** `_content_zone_height()` returns `framebuffer_height −
+- **THEN** `content_zone_height()` returns `framebuffer_height −
   STATUS_BAR_HEIGHT − BUTTON_BAR_SIZE`
 
 #### Scenario: Landscape side bar does not reduce content height
 
 - **WHEN** orientation is `LANDSCAPE` and `portrait_rotation=90` (button bar on
   right edge) and buttons are visible
-- **THEN** `_content_zone_height()` returns `framebuffer_height −
+- **THEN** `content_zone_height()` returns `framebuffer_height −
   STATUS_BAR_HEIGHT` (button bar does not reduce height)
 
 #### Scenario: Landscape top/bottom bar still reduces content height
 
 - **WHEN** orientation is `LANDSCAPE` and `portrait_rotation=0` or `180` (button
   bar on top or bottom edge) and buttons are visible
-- **THEN** `_content_zone_height()` returns `framebuffer_height −
+- **THEN** `content_zone_height()` returns `framebuffer_height −
   STATUS_BAR_HEIGHT − BUTTON_BAR_SIZE`
