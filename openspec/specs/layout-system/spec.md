@@ -8,32 +8,22 @@ their own layouts independently.
 
 ### Requirement: Core provides a unified fill_content layout function
 
-`core/layout.py` SHALL provide `fill_content(content: str, has_statusbar: bool = True, has_buttons: bool = True) -> str`
-that fills a single `core/layouts/content.html.j2` template with the given
-HTML content and returns a complete HTML document ready for `renderer.render()`.
-When `has_statusbar=True`, the template SHALL reserve a blank region of
-`STATUS_BAR_HEIGHT` pixels at the top. When `has_buttons=True`, the template
-SHALL reserve a blank region of `BUTTON_BAR_SIZE` pixels at the button-bar
-edge. Both `STATUS_BAR_HEIGHT` and `BUTTON_BAR_SIZE` SHALL be injected as
-Jinja2 template variables from `core/ui/` constants.
+`core/layout.py` SHALL provide `fill_content(content: str) -> str` that fills
+`core/layouts/content.html.j2` with the given HTML content and returns a
+complete HTML document ready for `renderer.render()`. The template SHALL
+render pure content at full panel width with no reserved blank regions for
+chrome. Chrome placement is the sole responsibility of the Compositor.
 
-#### Scenario: fill_content with defaults reserves both chrome regions
+#### Scenario: fill_content returns a complete HTML document
 
 - **WHEN** `fill_content("<p>Card</p>")` is called
-- **THEN** the returned HTML document has a blank top region of `STATUS_BAR_HEIGHT` px
-  and a blank region of `BUTTON_BAR_SIZE` px at the button-bar edge (derived
-  from orientation and `portrait_rotation`), and no button labels or status bar
-  content
+- **THEN** the returned string is a complete HTML document containing the
+  content with no blank chrome reservation regions
 
-#### Scenario: fill_content with has_statusbar=False omits status bar region
+#### Scenario: Rendered output has no chrome blank regions
 
-- **WHEN** `fill_content(content, has_statusbar=False)` is called
-- **THEN** the returned HTML has no reserved top region
-
-#### Scenario: fill_content with both False reproduces fullscreen behavior
-
-- **WHEN** `fill_content(content, has_statusbar=False, has_buttons=False)` is called
-- **THEN** the returned HTML occupies the full logical pixel area with no reserved regions
+- **WHEN** the returned HTML is rendered by `renderer.render()`
+- **THEN** the resulting image has no top or bottom blank reserved strips
 
 ### Requirement: Apps may define their own layouts
 
