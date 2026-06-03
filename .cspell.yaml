@@ -70,6 +70,7 @@ ignoreWords:
   - lineinfile
   - shutil
   - startswith
+  - wttr
 ignorePaths:
   - .git
   - .claude/commands/opsx

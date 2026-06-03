@@ -16,3 +16,4 @@
 | [0012](0012-two-layer-rendering-pipeline.md) | Two-layer rendering pipeline: wkhtmltoimage content + Pillow chrome | Accepted |
 | [0013](0013-chrome-always-1bit.md) | Chrome (status bar, button bar) is always rendered in 1-bit | Accepted |
 | [0014](0014-vertical-scroll-compositor-owned.md) | Vertical scroll: Compositor-owned state, PIL Image content interface | Accepted |
+| [0015](0015-weather-wttr-in-png.md) | Weather source: wttr.in pre-rendered PNG over data API or JS widget | Accepted |
