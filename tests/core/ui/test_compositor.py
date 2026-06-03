@@ -417,3 +417,129 @@ def test_set_content_retains_full_content_image():
     comp.set_content(img)
     assert comp._content_image is not None
     assert comp._content_image.size == (480, 1600)
+
+
+# ---------------------------------------------------------------------------
+# _content_zone_height() — orientation-aware button bar subtraction
+# ---------------------------------------------------------------------------
+
+_LABELS_WITH_BUTTONS = ["A", "B", "C", "D", "E", "F", "G", "H"]
+_STATES_DEFAULT = [ButtonState.DEFAULT] * 8
+
+
+def _settings_landscape(portrait_rotation: int = 90) -> dict:
+    return {
+        "display": {
+            "portrait_rotation": portrait_rotation,
+            "status_refresh_interval": 20,
+        },
+        "apps": {
+            "test_app": {
+                "orientation": "landscape",
+                "display_mode": "1bit",
+                "display": {"double_vertical_button_size": False},
+            }
+        },
+        "_active_app": "test_app",
+    }
+
+
+def test_content_zone_width_before_set_buttons_is_full_fb_width():
+    """Before set_buttons: no button bar active — width is full framebuffer width."""
+    comp = Compositor(_make_display(), _settings_landscape(portrait_rotation=90))
+    assert comp.content_zone_width() == comp._fb_width()
+
+
+def test_content_zone_height_before_set_buttons_excludes_only_status_bar():
+    """Before set_buttons: no button bar active — only status bar is subtracted."""
+    from inksink.core.ui import STATUS_BAR_HEIGHT
+
+    comp = Compositor(_make_display(), _settings())
+    assert comp.content_zone_height() == comp._fb_height() - STATUS_BAR_HEIGHT
+
+
+def test_no_button_chrome_rendered_before_set_buttons():
+    """set_content before set_buttons must not draw button bar pixels."""
+    from inksink.core.ui import BUTTON_BAR_SIZE
+
+    comp = Compositor(_make_display(), _settings())
+    img = Image.new("1", (comp._fb_width(), comp.content_zone_height()), color=1)
+    comp.set_content(img)
+
+    # Portrait: button bar would occupy bottom BUTTON_BAR_SIZE rows.
+    # Every pixel in that region must be white (1) — no chrome drawn.
+    fb = comp._framebuffer
+    bar_y = comp._fb_height() - BUTTON_BAR_SIZE
+    for x in (0, comp._fb_width() // 2, comp._fb_width() - 1):
+        assert (
+            fb.getpixel((x, bar_y)) == 1
+        ), f"unexpected button chrome at ({x}, {bar_y})"
+
+
+def test_content_zone_width_landscape_side_bar_subtracts():
+    """Landscape rotation=90: side bar → width reduced by BUTTON_BAR_SIZE."""
+    from inksink.core.ui import BUTTON_BAR_SIZE
+
+    comp = Compositor(_make_display(), _settings_landscape(portrait_rotation=90))
+    comp.set_buttons(_LABELS_WITH_BUTTONS, _STATES_DEFAULT)
+    assert comp.content_zone_width() == comp._fb_width() - BUTTON_BAR_SIZE
+
+
+def test_content_zone_width_landscape_top_bar_is_full_fb_width():
+    """Landscape + rotation=180: button bar on top edge → width not reduced."""
+    comp = Compositor(_make_display(), _settings_landscape(portrait_rotation=180))
+    comp.set_buttons(_LABELS_WITH_BUTTONS, _STATES_DEFAULT)
+    assert comp.content_zone_width() == comp._fb_width()
+
+
+def test_content_zone_width_portrait_is_full_fb_width():
+    """Portrait: button bar is on bottom edge → width is not reduced."""
+    comp = Compositor(_make_display(), _settings())
+    comp.set_buttons(_LABELS_WITH_BUTTONS, _STATES_DEFAULT)
+    assert comp.content_zone_width() == comp._fb_width()
+
+
+def test_content_zone_height_public_matches_private():
+    """Public content_zone_height() must equal the private implementation."""
+    comp = Compositor(_make_display(), _settings())
+    comp.set_buttons(_LABELS_WITH_BUTTONS, _STATES_DEFAULT)
+    assert comp.content_zone_height() == comp._content_zone_height()
+
+
+def test_content_zone_height_portrait_subtracts_button_bar():
+    """Portrait: button bar is on bottom edge → height reduced by BUTTON_BAR_SIZE."""
+    from inksink.core.ui import BUTTON_BAR_SIZE, STATUS_BAR_HEIGHT
+
+    comp = Compositor(_make_display(), _settings())
+    comp.set_buttons(_LABELS_WITH_BUTTONS, _STATES_DEFAULT)
+    expected = comp._fb_height() - STATUS_BAR_HEIGHT - BUTTON_BAR_SIZE
+    assert comp._content_zone_height() == expected
+
+
+def test_content_zone_height_landscape_side_bar_does_not_subtract():
+    """Landscape + rotation=90: button bar is on right edge → height unchanged."""
+    from inksink.core.ui import STATUS_BAR_HEIGHT
+
+    comp = Compositor(_make_display(), _settings_landscape(portrait_rotation=90))
+    comp.set_buttons(_LABELS_WITH_BUTTONS, _STATES_DEFAULT)
+    expected = comp._fb_height() - STATUS_BAR_HEIGHT
+    assert comp._content_zone_height() == expected
+
+
+def test_content_zone_height_landscape_top_bar_subtracts():
+    """Landscape + rotation=180: button bar is on top edge → height reduced."""
+    from inksink.core.ui import BUTTON_BAR_SIZE, STATUS_BAR_HEIGHT
+
+    comp = Compositor(_make_display(), _settings_landscape(portrait_rotation=180))
+    comp.set_buttons(_LABELS_WITH_BUTTONS, _STATES_DEFAULT)
+    expected = comp._fb_height() - STATUS_BAR_HEIGHT - BUTTON_BAR_SIZE
+    assert comp._content_zone_height() == expected
+
+
+def test_content_zone_reserves_bar_when_all_labels_none():
+    """set_buttons([None]*8) marks bar as active; content zone must still exclude it."""
+    from inksink.core.ui import BUTTON_BAR_SIZE
+
+    comp = Compositor(_make_display(), _settings_landscape(portrait_rotation=90))
+    comp.set_buttons([None] * 8, _STATES_DEFAULT)
+    assert comp.content_zone_width() == comp._fb_width() - BUTTON_BAR_SIZE

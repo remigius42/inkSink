@@ -13,6 +13,7 @@
       - python3-rpi.gpio
       - wkhtmltopdf
       - fonts-noto-cjk
+      - fonts-dejavu-core
       - ufw
       - rsync
       - fail2ban

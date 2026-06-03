@@ -16,9 +16,9 @@ progress tracker within an Anki Session).
 
 ## App
 
-A self-contained mode of operation running on the Device. Each App owns its
-own Python subpackage under `src/inksink/`. The Launcher is the first App to
-run on boot; content Apps (`anki`, `ebooks`, `pdf`) are launched from it.
+A self-contained mode of operation running on the Device. Each App owns its own
+Python subpackage under `src/inksink/`. The Launcher is the first App to run on
+boot; content Apps (`anki`, `ebooks`, `pdf`, `weather`) are launched from it.
 
 ## Base role
 

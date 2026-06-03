@@ -19,9 +19,20 @@
         - python3-rpi.gpio
         - wkhtmltopdf
         - fonts-noto-cjk
+        - fonts-dejavu-core
         - ufw
         - rsync
         - fail2ban
+
+    - name: Assert DejaVuSansMono.ttf is present
+      ansible.builtin.stat:
+        path: /usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf
+      register: dejavu_font
+
+    - name: Fail if DejaVuSansMono.ttf missing
+      ansible.builtin.assert:
+        that: dejavu_font.stat.exists
+        fail_msg: "DejaVuSansMono.ttf not found; install fonts-dejavu-core"
 
     - name: Assert smbus2 is importable from virtualenv
       ansible.builtin.command:

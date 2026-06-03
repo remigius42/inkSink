@@ -13,6 +13,7 @@ import subprocess  # noqa: S404  # nosec B404 — subprocess is intentional; all
 from typing import Callable
 
 import inksink.anki.app as _anki_app
+import inksink.weather.app as _weather_app
 from inksink.core.config import load_settings
 from inksink.core.layout import fill_content
 from inksink.core.state import (
@@ -37,6 +38,7 @@ _LINE_HEIGHT_PX = 20
 APPS: list[tuple[str, Callable]] = [
     # lambda defers run_anki lookup so patch("inksink.anki.app.run_anki") works in tests
     ("Anki", lambda d, i, s, c: _anki_app.run_anki(d, i, s, c)),  # noqa: E731
+    ("Weather", lambda d, i, s, c: _weather_app.run(d, i, s, c)),  # noqa: E731
 ]
 # pylint: enable=unnecessary-lambda
 

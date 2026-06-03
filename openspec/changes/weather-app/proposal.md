@@ -29,15 +29,18 @@ sessions without requiring any interaction.
 
 ### Modified Capabilities
 
-- `ui-compositor`: Fix landscape content zone height calculation — only subtract
-  `BUTTON_BAR_SIZE` from height when the button bar edge is `top` or `bottom`
+- `ui-compositor`: Fix landscape content zone height calculation; expose
+  `content_zone_height()` and `content_zone_width()` as the public API for Apps
+  to size their content — only the height subtracts `BUTTON_BAR_SIZE` for
+  `top`/`bottom` edges; only the width subtracts it for `left`/`right` edges
 - `ansible-provisioning`: Add `fonts-dejavu-core` to the base role package list
 - `launcher-menu`: Register the Weather App as a launchable content App
 
 ## Impact
 
 - New `src/inksink/weather/` subpackage
-- `src/inksink/core/ui/compositor.py`: landscape height bug fix
+- `src/inksink/core/ui/compositor.py`: landscape height bug fix; new public
+  `content_zone_height()` / `content_zone_width()` methods
 - `ansible/roles/base/`: add `fonts-dejavu-core` package
 - `src/inksink/launcher/app.py`: register Weather App
 - New runtime dependency: `requests` (if not already present) for HTTP fetches
