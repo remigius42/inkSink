@@ -22,27 +22,23 @@ alongside `Display`.
 
 ### Requirement: set_content triggers full refresh and resets framebuffer
 
-`Compositor.set_content(html: str)` SHALL render the HTML via `renderer.render()`,
-composite it onto the framebuffer, and call `display.display_full()` or
+`Compositor.set_content(img: Image)` SHALL accept a PIL Image, reset the
+Scroll Offset to 0, retain the full image for scroll operations, crop the
+Content Zone region (rows 0 through `content_zone_height − 1`) from the
+image, composite it into the framebuffer at the correct y-offset (below the
+status bar when shown), draw chrome, and call `display.display_full()` or
 `display.display_4gray()` according to the App's display mode. This is the
 natural App transition point; all previous framebuffer state is discarded.
 
-Before calling `display.display_full()` / `display.display_4gray()`,
-`set_content` SHALL obtain the layout's chrome flags (`has_statusbar`,
-`has_buttons`) from `layout.fill_content(...)` and honour them: chrome regions
-are redrawn only when the corresponding flag is `True`; when `has_statusbar` is
-`False` or `has_buttons` is `False` the Compositor SHALL omit drawing those
-regions, treating the framebuffer as fully replaced (fullscreen/error/offline
-screens).
-
 #### Scenario: New content replaces previous framebuffer state
 
-- **WHEN** `set_content(html)` is called after a prior screen state
-- **THEN** the framebuffer is fully redrawn from the new HTML and current chrome state
+- **WHEN** `set_content(img)` is called after a prior screen state
+- **THEN** the framebuffer is fully redrawn from the new image and current
+  chrome state
 
 #### Scenario: set_content with 4gray mode calls display_4gray
 
-- **WHEN** the App's display mode is `"4gray"` and `set_content(html)` is called
+- **WHEN** the App's display mode is `"4gray"` and `set_content(img)` is called
 - **THEN** `display.display_4gray()` is used for the full refresh
 
 ### Requirement: set_buttons redraws button bar via partial refresh
