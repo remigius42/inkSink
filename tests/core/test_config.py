@@ -77,3 +77,13 @@ def test_defaults_include_vertical_scroll_step():
 def test_defaults_include_renderer_max_image_height():
     result = load_settings(path="/nonexistent/path/config.yml")
     assert result["renderer"]["max_image_height"] == 8000
+
+
+def test_defaults_include_display_server_config():
+    result = load_settings(path="/nonexistent/path/config.yml")
+    ds = result["apps"]["display_server"]
+    assert ds["enabled"] is False
+    assert ds["http_port"] == 8080
+    assert ds["https_port"] == 8443
+    assert ds["token"] == ""
+    assert ds["orientation"] == "portrait"

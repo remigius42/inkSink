@@ -7,6 +7,7 @@ lazily so the module is safe to import on non-Pi dev machines.
 
 from __future__ import annotations
 
+import threading
 import time
 from typing import Any
 
@@ -65,8 +66,25 @@ class InputHandler:
             self._gpio.setup(pin, self._gpio.IN, pull_up_down=self._gpio.PUD_UP)
         self._setup_done = True
 
-    def wait_for_action(self) -> str:
-        """Block until a button is cleanly pressed; return the action name."""
+    def _check_pins(self, stop_event: threading.Event | None) -> str | None:
+        """Scan all pins once.
+
+        Return action, "" if interrupted, None if no clean press.
+        """
+        for pin, action in self._pin_map.items():
+            if self._gpio.input(pin) == 0:  # active-low
+                time.sleep(_DEBOUNCE_S)
+                if stop_event is not None and stop_event.is_set():
+                    return ""
+                if self._gpio.input(pin) == 0:
+                    return action
+        return None
+
+    def wait_for_action(self, stop_event: threading.Event | None = None) -> str:
+        """Block until a button is cleanly pressed; return the action name.
+
+        If stop_event is provided and becomes set, returns "" immediately.
+        """
         if self._gpio is None:
             raise HardwareNotAvailable("RPi.GPIO not available")
         if not self._setup_done:
@@ -74,9 +92,9 @@ class InputHandler:
                 "InputHandler.setup() must be called before wait_for_action()"
             )
         while True:
-            for pin, action in self._pin_map.items():
-                if self._gpio.input(pin) == 0:  # active-low
-                    time.sleep(_DEBOUNCE_S)
-                    if self._gpio.input(pin) == 0:
-                        return action
+            if stop_event is not None and stop_event.is_set():
+                return ""
+            result = self._check_pins(stop_event)
+            if result is not None:
+                return result
             time.sleep(_POLL_S)

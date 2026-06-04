@@ -38,6 +38,13 @@ DEFAULTS: dict = {
             "cycle_speed_seconds": 30,
             "location_shortcuts": [0, 1, 2, 3],
         },
+        "display_server": {
+            "enabled": False,
+            "http_port": 8080,
+            "https_port": 8443,
+            "token": "",
+            "orientation": "portrait",
+        },
     },
 }
 

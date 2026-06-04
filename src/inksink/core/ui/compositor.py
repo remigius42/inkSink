@@ -91,11 +91,11 @@ class Compositor:
         with self._lock:
             self._status_bar_visible = visible
 
-    def set_content(self, img: Image.Image) -> None:
+    def set_content(self, img: Image.Image, mode: str | None = None) -> None:
         with self._lock:
             self._content_image = img
             self._scroll_offset = 0
-            self._compose_and_display(full_refresh=True)
+            self._compose_and_display(full_refresh=True, mode=mode)
 
     def scroll_down(self) -> tuple[bool, bool]:
         with self._lock:
@@ -163,7 +163,7 @@ class Compositor:
             h -= BUTTON_BAR_SIZE
         return max(h, 0)
 
-    def _compose_and_display(self, full_refresh: bool) -> None:
+    def _compose_and_display(self, full_refresh: bool, mode: str | None = None) -> None:
         """Crop content image into framebuffer and refresh. Call under lock."""
         self._framebuffer = self._make_framebuffer()
         if self._content_image is not None:
@@ -176,10 +176,13 @@ class Compositor:
             self._framebuffer.paste(converted, (0, content_y))
         self._redraw_chrome()
         if full_refresh:
-            if self._display_mode == "4gray":
+            effective_mode = mode if mode is not None else self._display_mode
+            if effective_mode == "4gray":
                 self._display.display_4gray(self._framebuffer)
-            else:
+            elif effective_mode == "1bit":
                 self._display.display_full(self._framebuffer)
+            else:
+                raise ValueError(f"unknown display mode: {effective_mode!r}")
         else:
             self._display.display_partial(self._framebuffer)
 

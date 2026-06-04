@@ -28,7 +28,7 @@ call display or compositor methods concurrently with the main thread.
 
 ## Decisions
 
-### Threading model: queue-based handoff
+### Threading model: queue-based handoff with event interrupt
 
 The Display Server runs an HTTP server on a daemon thread. It does **not** call
 `compositor.set_content()` directly — that would race with the main thread.
@@ -37,21 +37,42 @@ Instead it writes to a single `Optional[tuple[Image.Image, str]]` slot on the
 the display mode (`"1bit"` or `"4gray"`, from the `?mode` query parameter,
 defaulting to `"1bit"`). If the slot is already occupied, the handler returns
 HTTP 429 immediately — no buffering of stale content, immediate feedback to
-retry. The main loop in `__main__.py` consumes the slot between Launcher
-iterations:
+retry.
+
+A `threading.Event` (`display_server_event`) is shared between `DisplayServer`
+and the main loop. `DisplayServer.try_set()` calls `event.set()` on success,
+which unblocks any `wait_for_action(stop_event)` call that is currently polling.
+`InputHandler.wait_for_action()` accepts an optional `stop_event` and returns
+`""` when it is set. `Launcher` accepts a `stop_event` and threads it through
+all internal `wait_for_action()` calls, returning early when interrupted.
+
+The main loop in `__main__.py`:
 
 ```python
-while True:
-    if (pending := display_server.take()) is not None:
-        img, mode = pending
-        compositor.set_content(img, mode=mode)
-    try:
-        Launcher(...).run()
-    except ...
+display_server_event = threading.Event()
+# ...
+def _render_loop(display_server, compositor, input_handler, display, settings, display_server_event):
+    while True:
+        if display_server is not None:
+            pending = display_server.take()
+            if pending is not None:
+                img, mode = pending
+                if compositor is not None:
+                    compositor.set_content(img, mode=mode)
+                    if input_handler.wait_for_action(display_server_event) == "":
+                        continue  # new image arrived — show it without going through Launcher
+        display_server_event.clear()
+        try:
+            Launcher(..., stop_event=display_server_event).run()
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            _handle_app_exception(...)
 ```
 
 This keeps all Compositor and Display calls on the main thread with no locking
-required.
+required. Images stay visible until the user presses a button or a new push
+arrives.
 
 **Alternative considered:** a threading.Lock around Compositor calls. Rejected —
 the SPI bus and Waveshare library make concurrent display operations unsafe

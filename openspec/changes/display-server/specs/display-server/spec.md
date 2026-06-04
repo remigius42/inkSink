@@ -20,6 +20,21 @@ Launcher iterations by calling `compositor.set_content(image, mode=mode)`.
 - **THEN** no HTTP or HTTPS listener is started and the Launcher loop is
   unaffected
 
+### Requirement: HTTPS listener is skipped when cert files are absent
+
+The Display Server SHALL start the HTTP listener normally and skip the HTTPS
+listener when `apps.display_server.enabled` is `true` but the TLS certificate
+or key files are not present at `/etc/inksink/display_server/`, emitting a
+warning log. No error is raised. HTTPS clients receive a connection refused;
+they are NOT redirected to the HTTP listener.
+
+#### Scenario: HTTP-only when certs absent
+
+- **WHEN** `apps.display_server.enabled` is `true`
+- **AND** `/etc/inksink/display_server/cert.pem` or `key.pem` do not exist
+- **THEN** only the HTTP listener starts; no HTTPS listener is bound
+- **AND** a warning is logged
+
 ### Requirement: POST /render accepts an optional mode query parameter
 
 `POST /render` SHALL accept an optional `mode` query parameter with values
@@ -90,6 +105,11 @@ with an empty body. The `orientation` value SHALL be read from
 - **WHEN** an empty body is POSTed with `Content-Type: text/html`
 - **THEN** the server returns 400
 
+#### Scenario: HTML render failure returns 500
+
+- **WHEN** a valid HTML body is POSTed but `renderer.render()` raises an exception
+- **THEN** the server returns 500 (server-side failure, not a client error)
+
 ### Requirement: Unsupported content type returns 415
 
 `POST /render` SHALL match on the media type (type/subtype) of the
@@ -104,9 +124,10 @@ HTTP 415 when the media type is neither `image/png` nor `text/html`.
 ### Requirement: HTTPS enforces optional bearer token
 
 When `apps.display_server.token` is set, the HTTPS listener SHALL require an
-`Authorization: Bearer <token>` header on every request. Requests without the
-header or with an incorrect token SHALL return HTTP 401. The HTTP listener SHALL
-never check for a token.
+`Authorization: Bearer <token>` header on every request. A request with no
+`Authorization` header SHALL return HTTP 401. A request with an `Authorization`
+header that does not match the configured token SHALL return HTTP 403. The HTTP
+listener SHALL never check for a token.
 
 #### Scenario: Correct token accepted on HTTPS
 
@@ -114,11 +135,17 @@ never check for a token.
   `Authorization: Bearer` token
 - **THEN** the request is processed normally
 
-#### Scenario: Missing token rejected on HTTPS
+#### Scenario: Missing token rejected with 401 on HTTPS
 
 - **WHEN** `apps.display_server.token` is set and a request arrives on the HTTPS
   listener without an `Authorization` header
 - **THEN** the server returns 401
+
+#### Scenario: Wrong token rejected with 403 on HTTPS
+
+- **WHEN** `apps.display_server.token` is set and a request arrives on the HTTPS
+  listener with an incorrect `Authorization` header
+- **THEN** the server returns 403
 
 #### Scenario: HTTP listener ignores token config
 
@@ -126,17 +153,43 @@ never check for a token.
   listener without an `Authorization` header
 - **THEN** the request is processed normally (no 401)
 
-### Requirement: Pending image is rendered on the main thread
+### Requirement: Pending image is rendered on the main thread and held until input
 
-The main loop SHALL consume the pending image slot between Launcher iterations
-and call `compositor.set_content()` if an image is present. All Compositor and
-Display calls remain on the main thread.
+The main loop SHALL consume the pending image slot, call
+`compositor.set_content()`, and then block on `input_handler.wait_for_action()`
+so the image stays visible until the user presses a button or a new push
+arrives. When a new push interrupts the wait, the loop SHALL immediately show
+the new image without passing through the Launcher. All Compositor and Display
+calls remain on the main thread.
 
-#### Scenario: Push renders between Launcher runs
+A `threading.Event` (`display_server_event`) is shared between `DisplayServer`
+and the main loop. `DisplayServer.try_set()` calls `event.set()` on success.
+The main loop passes the event as `stop_event` to `wait_for_action()` (returns
+`""` when set) and to `Launcher` (returns early when set). The event is cleared
+before each Launcher run.
 
-- **WHEN** the pending slot holds an image at the start of a main loop iteration
-- **THEN** `compositor.set_content()` is called with that image before the next
-  Launcher run begins
+#### Scenario: Launcher interrupted when image arrives
+
+- **WHEN** the Launcher is running and a push is accepted
+- **THEN** the Launcher returns, the image is shown, and the loop blocks until
+  a button is pressed or another push arrives
+
+#### Scenario: Image held until button press
+
+- **WHEN** an image is shown
+- **THEN** `wait_for_action()` blocks and the image remains on screen until the
+  user presses a button
+
+#### Scenario: New image replaces shown image without passing through Launcher
+
+- **WHEN** an image is shown and a new push arrives before a button is pressed
+- **THEN** the new image is shown immediately without running the Launcher
+
+#### Scenario: Image shown, button pressed, back to Launcher, new image shown
+
+- **WHEN** an image is shown, a button is pressed, the Launcher runs, and
+  another push arrives
+- **THEN** the Launcher returns and the new image is shown
 
 ### Requirement: POST /render returns 429 when slot is occupied
 

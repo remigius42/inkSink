@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MIT
+# spellchecker:ignore isreg
 ---
 - name: Verify inksink device state
   hosts: all
@@ -142,3 +143,28 @@
         fail_msg: >
           INKSINK_VERSION is not set or empty in the systemd service unit;
           required by version_info() on the Status screen
+
+    - name: Assert display_server cert.pem exists
+      ansible.builtin.stat:
+        path: /etc/inksink/display_server/cert.pem
+      register: ds_cert
+
+    - name: Fail if display_server cert.pem missing or not a regular file
+      ansible.builtin.assert:
+        that:
+          - ds_cert.stat.exists
+          - ds_cert.stat.isreg
+        fail_msg: "/etc/inksink/display_server/cert.pem not found or not a regular file; run setup.yml"
+
+    - name: Assert display_server key.pem exists
+      ansible.builtin.stat:
+        path: /etc/inksink/display_server/key.pem
+      register: ds_key
+
+    - name: Fail if display_server key.pem missing, not a regular file, or wrong permissions
+      ansible.builtin.assert:
+        that:
+          - ds_key.stat.exists
+          - ds_key.stat.isreg
+          - ds_key.stat.mode == "0600"
+        fail_msg: "/etc/inksink/display_server/key.pem not found, not a regular file, or not mode 0600; run setup.yml"
