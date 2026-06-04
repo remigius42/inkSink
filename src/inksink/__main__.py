@@ -2,6 +2,7 @@
 
 import logging
 import signal
+import threading
 
 from inksink.core.config import load_settings
 from inksink.core.display import Display
@@ -9,7 +10,42 @@ from inksink.core.input import HardwareNotAvailable, InputHandler
 from inksink.core.layout import fill_error
 from inksink.core.renderer import Orientation, render
 from inksink.core.startup import startup
+from inksink.display_server import DisplayServer
 from inksink.launcher.app import Launcher
+
+
+def _render_loop(
+    display_server,
+    compositor,
+    input_handler,
+    display,
+    settings: dict,
+    display_server_event: threading.Event,
+) -> None:
+    """Poll display server slot, run Launcher, recover from errors."""
+    while True:
+        if display_server is not None:
+            pending = display_server.take()
+            if pending is not None:
+                img, mode = pending
+                if compositor is not None:
+                    compositor.set_content(img, mode=mode)
+                    if input_handler.wait_for_action(display_server_event) == "":
+                        continue
+        display_server_event.clear()
+        try:
+            Launcher(
+                display,
+                input_handler,
+                settings,
+                compositor,
+                stop_event=display_server_event,
+            ).run()
+        except KeyboardInterrupt:
+            break
+        # intentional top-level recovery handler to show error screen
+        except Exception as e:  # noqa: BLE001
+            _handle_app_exception(e, compositor, display, input_handler, settings)
 
 
 def _handle_app_exception(
@@ -63,16 +99,23 @@ def main() -> None:
     if compositor is not None:
         compositor.start()
 
+    display_server = None
+    display_server_event = threading.Event()
     try:
-        while True:
-            try:
-                Launcher(display, input_handler, settings, compositor).run()
-            except KeyboardInterrupt:
-                break
-            # intentional top-level recovery handler to show error screen
-            except Exception as e:  # noqa: BLE001
-                _handle_app_exception(e, compositor, display, input_handler, settings)
+        if settings["apps"]["display_server"]["enabled"]:
+            display_server = DisplayServer(settings, notify_event=display_server_event)
+            display_server.start()
+        _render_loop(
+            display_server,
+            compositor,
+            input_handler,
+            display,
+            settings,
+            display_server_event,
+        )
     finally:
+        if display_server is not None:
+            display_server.stop()
         if compositor is not None:
             compositor.stop()
         display.sleep()

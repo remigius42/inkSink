@@ -1,4 +1,5 @@
 import sys
+import threading
 from unittest.mock import MagicMock
 
 import pytest
@@ -122,3 +123,60 @@ def test_clean_press_returns_action(mocker):
     mocker.patch("inksink.core.input.time.sleep")
     result = h.wait_for_action()
     assert result == "good"
+
+
+def test_stop_event_already_set_returns_empty_string(mocker):
+    gpio = MagicMock()
+    gpio.input.return_value = 1  # no button pressed
+
+    h = InputHandler(pin_map={19: "good"})
+    h._gpio = gpio
+    h.setup()
+    mocker.patch("inksink.core.input.time.sleep")
+
+    event = threading.Event()
+    event.set()
+    assert h.wait_for_action(stop_event=event) == ""
+
+
+def test_stop_event_set_during_debounce_returns_empty_string(mocker):
+    """If stop_event fires during the 50ms debounce sleep, return "" not the action."""
+    gpio = MagicMock()
+    # First read: LOW (pin pressed) — enters debounce path
+    gpio.input.return_value = 0
+
+    h = InputHandler(pin_map={19: "good"})
+    h._gpio = gpio
+    h.setup()
+
+    event = threading.Event()
+
+    sleep_calls = []
+
+    def set_event_on_debounce_sleep(dur):
+        sleep_calls.append(dur)
+        if dur == 0.05:  # _DEBOUNCE_S
+            event.set()
+
+    mocker.patch(
+        "inksink.core.input.time.sleep", side_effect=set_event_on_debounce_sleep
+    )
+    result = h.wait_for_action(stop_event=event)
+    assert result == ""
+
+
+def test_stop_event_set_during_poll_returns_empty_string(mocker):
+    gpio = MagicMock()
+    gpio.input.return_value = 1  # no button pressed
+
+    h = InputHandler(pin_map={19: "good"})
+    h._gpio = gpio
+    h.setup()
+
+    event = threading.Event()
+
+    def set_event_on_second_sleep(_dur):
+        event.set()
+
+    mocker.patch("inksink.core.input.time.sleep", side_effect=set_event_on_second_sleep)
+    assert h.wait_for_action(stop_event=event) == ""

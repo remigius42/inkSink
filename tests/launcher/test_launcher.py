@@ -514,6 +514,22 @@ def test_btn2_calls_run_anki_with_display_input_settings():
     assert args[2] is settings
 
 
+def test_run_returns_without_dispatch_when_stop_event_set():
+    display = _make_display()
+    input_handler = _make_input([""])  # "" = stop_event fired
+    dispatched: list[str] = []
+
+    mock_app = MagicMock(side_effect=lambda *a, **kw: dispatched.append("called"))
+
+    with (
+        patch("inksink.launcher.app.fill_content", return_value="<html/>"),
+        patch("inksink.launcher.app.APPS", [("TestApp", mock_app)]),
+    ):
+        Launcher(display, input_handler, _settings(), MagicMock()).run()
+
+    assert dispatched == []
+
+
 def test_run_app_exception_propagates():
     display = _make_display()
     input_handler = _make_input(["btn_2"])

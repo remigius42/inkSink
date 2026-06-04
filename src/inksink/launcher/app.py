@@ -10,6 +10,7 @@ from __future__ import annotations
 import html
 import locale
 import subprocess  # noqa: S404  # nosec B404 — subprocess is intentional; all calls use hardcoded system binaries
+import threading
 from typing import Callable
 
 import inksink.anki.app as _anki_app
@@ -111,12 +112,24 @@ def _scroll_content_html(lines: list[str], offset: int) -> str:
 
 
 class Launcher:
-    def __init__(self, display, input_handler, settings: dict, compositor) -> None:
+    def __init__(
+        self,
+        display,
+        input_handler,
+        settings: dict,
+        compositor,
+        stop_event: threading.Event | None = None,
+    ) -> None:
         """Initialize launcher with hardware handles and runtime settings."""
         self._display = display
         self._input_handler = input_handler
         self._orientation = settings["apps"]["launcher"]["orientation"]
         self._compositor = compositor
+        self._stop_event = stop_event
+
+    def _wait_action(self) -> str:
+        """Block until a button press or stop_event; returns "" when interrupted."""
+        return self._input_handler.wait_for_action(self._stop_event)
 
     def _render_and_display(self, html_doc: str) -> None:
         from inksink.core import renderer
@@ -214,7 +227,7 @@ class Launcher:
         self._render_and_display(fill_content(content))
 
         while True:
-            if self._input_handler.wait_for_action() == "btn_1":
+            if self._wait_action() in ("btn_1", ""):
                 return
 
     def _render_settings(self) -> None:
@@ -232,8 +245,8 @@ class Launcher:
                 self._set_buttons(["Menu", "", "", "", "", "↓", "↑", ""])
                 html_doc = fill_content(content)
                 self._render_and_display(html_doc)
-            action = self._input_handler.wait_for_action()
-            if action == "btn_1":
+            action = self._wait_action()
+            if action in ("btn_1", ""):
                 return
             offset, needs_render = _next_scroll_offset(action, offset, max_offset)
 
@@ -271,8 +284,8 @@ class Launcher:
                 self._set_buttons(["Menu", "", "", "", "", "↓", "↑", ""])
                 html_doc = fill_content(content)
                 self._render_and_display(html_doc)
-            action = self._input_handler.wait_for_action()
-            if action == "btn_1":
+            action = self._wait_action()
+            if action in ("btn_1", ""):
                 return
             offset, needs_render = _next_scroll_offset(action, offset, max_offset)
 
@@ -281,7 +294,7 @@ class Launcher:
 
     def run(self) -> None:
         self._render_menu()
-        action = self._input_handler.wait_for_action()
+        action = self._wait_action()
 
         settings = load_settings()
         app_args = (self._display, self._input_handler, settings, self._compositor)

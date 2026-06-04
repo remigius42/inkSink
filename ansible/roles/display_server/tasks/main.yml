@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: MIT
+# spellchecker:ignore selfsigned
+---
+- name: Create display_server config directory
+  ansible.builtin.file:
+    path: /etc/inksink/display_server
+    state: directory
+    mode: "0755"
+    owner: pi
+    group: pi
+
+# force: false — never regenerate an existing key so clients don't lose trust
+- name: Generate TLS private key
+  community.crypto.openssl_privatekey:
+    path: /etc/inksink/display_server/key.pem
+    size: 2048
+    mode: "0600"
+    owner: pi
+    group: pi
+    force: false
+
+# force: false — never regenerate an existing cert so clients don't lose trust
+- name: Generate self-signed TLS certificate
+  community.crypto.x509_certificate:
+    path: /etc/inksink/display_server/cert.pem
+    privatekey_path: /etc/inksink/display_server/key.pem
+    provider: selfsigned
+    mode: "0644"
+    owner: pi
+    group: pi
+    force: false

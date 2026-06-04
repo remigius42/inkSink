@@ -21,8 +21,7 @@ where information flows to rest.
 **Example use cases:**
 
 - **Anki spaced repetition** — Distraction-free flashcard reviews
-- **Information dashboard** — Weather and other push-rendered content _(Display
-  Server planned)_
+- **Information dashboard** — Weather and push-rendered content via Display Server
 
 **Why inkSink?**
 
@@ -51,8 +50,8 @@ If building from scratch isn't for you, these off-the-shelf devices support cust
 - Cheaper than most alternatives (parts only; excludes build time)
 - Full GPIO access for custom button layout (all commercial devices are sealed)
 - Custom 7.5" display size; commercial devices are 6–10" fixed form factors
-- Silent network display — any LAN device can push content via HTTP POST
-  (planned); no commercial device exposes an open rendering API like this
+- Silent network display — any LAN device can push content via HTTP POST;
+  no commercial device exposes an open rendering API like this
 
 ## Hardware
 
@@ -116,7 +115,7 @@ Display is ~2mm at the front, electronics stack ~22mm at the back, with a
 - wttr.in pre-rendered PNG displayed in landscape orientation
 - Fetched on app launch; location configurable
 
-### Display Server _(planned)_
+### Display Server
 
 Any device on the LAN can push content to the screen without user interaction:
 

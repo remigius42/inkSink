@@ -399,6 +399,33 @@ def test_set_content_4gray_calls_display_4gray():
     assert not display.display_full.called
 
 
+def test_set_content_explicit_mode_1bit_calls_display_full():
+    display = _make_display()
+    comp = Compositor(display, _settings(display_mode="4gray"))
+    img = Image.new("RGB", (480, 800), color=(128, 128, 128))
+    comp.set_content(img, mode="1bit")
+    assert display.display_full.called
+    assert not display.display_4gray.called
+
+
+def test_set_content_explicit_mode_4gray_calls_display_4gray():
+    display = _make_display()
+    comp = Compositor(display, _settings(display_mode="1bit"))
+    img = Image.new("RGB", (480, 800), color=(128, 128, 128))
+    comp.set_content(img, mode="4gray")
+    assert display.display_4gray.called
+    assert not display.display_full.called
+
+
+def test_set_content_no_mode_uses_app_display_mode_4gray():
+    display = _make_display()
+    comp = Compositor(display, _settings(display_mode="4gray"))
+    img = Image.new("RGB", (480, 800), color=(128, 128, 128))
+    comp.set_content(img)
+    assert display.display_4gray.called
+    assert not display.display_full.called
+
+
 def test_set_content_resets_scroll_offset_to_zero():
 
     display = _make_display()
@@ -534,6 +561,14 @@ def test_content_zone_height_landscape_top_bar_subtracts():
     comp.set_buttons(_LABELS_WITH_BUTTONS, _STATES_DEFAULT)
     expected = comp._fb_height() - STATUS_BAR_HEIGHT - BUTTON_BAR_SIZE
     assert comp._content_zone_height() == expected
+
+
+def test_set_content_unknown_mode_raises():
+    display = _make_display()
+    comp = Compositor(display, _settings())
+    img = Image.new("RGB", (480, 800))
+    with pytest.raises(ValueError, match="unknown"):
+        comp.set_content(img, mode="unknown")
 
 
 def test_content_zone_reserves_bar_when_all_labels_none():

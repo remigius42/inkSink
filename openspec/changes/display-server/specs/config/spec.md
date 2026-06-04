@@ -9,6 +9,7 @@
 - `http_port`: `8080`
 - `https_port`: `8443`
 - `token`: `""` (empty string; empty string means no token enforcement)
+- `orientation`: `"portrait"`
 
 #### Scenario: Display Server defaults present when config is absent
 
@@ -17,3 +18,4 @@
 - **AND** `settings["apps"]["display_server"]["http_port"]` is `8080`
 - **AND** `settings["apps"]["display_server"]["https_port"]` is `8443`
 - **AND** `settings["apps"]["display_server"]["token"]` is `""`
+- **AND** `settings["apps"]["display_server"]["orientation"]` is `"portrait"`
