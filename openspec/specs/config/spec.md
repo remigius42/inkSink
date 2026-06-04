@@ -76,3 +76,23 @@ ebook-length content.
 
 - **WHEN** `renderer.max_image_height` is set to 4000 in config
 - **THEN** `renderer.render()` uses 4000 as the truncation threshold
+
+### Requirement: `apps.display_server` defaults are defined
+
+`DEFAULTS` in `core/config.py` SHALL include the following keys under
+`apps.display_server`:
+
+- `enabled`: `false`
+- `http_port`: `8080`
+- `https_port`: `8443`
+- `token`: `""` (empty string; empty string means no token enforcement)
+- `orientation`: `"portrait"`
+
+#### Scenario: Display Server defaults present when config is absent
+
+- **WHEN** `load_settings()` is called and no config file exists
+- **THEN** `settings["apps"]["display_server"]["enabled"]` is `false`
+- **AND** `settings["apps"]["display_server"]["http_port"]` is `8080`
+- **AND** `settings["apps"]["display_server"]["https_port"]` is `8443`
+- **AND** `settings["apps"]["display_server"]["token"]` is `""`
+- **AND** `settings["apps"]["display_server"]["orientation"]` is `"portrait"`
