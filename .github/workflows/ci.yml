@@ -41,4 +41,12 @@ jobs:
         run: .venv/bin/pre-commit run --all-files
 
       - name: Run pytest
-        run: .venv/bin/pytest
+        run: .venv/bin/pytest --cov-report=xml:coverage.xml
+
+      - name: Upload coverage to Codacy
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_REPOSITORY_TOKEN }}
+        run: |
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) report \
+            -r coverage.xml \
+            --language Python
