@@ -1,3 +1,5 @@
+<!-- spellchecker:ignore addopts -->
+
 # Development
 
 Local setup for working on this project: dev environment, running tests,
@@ -25,6 +27,8 @@ source .venv/bin/activate
 ```bash
 pytest
 ```
+
+Coverage is reported automatically (configured via `addopts` in `pyproject.toml`).
 
 ## Linting and formatting
 
