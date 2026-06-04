@@ -17,3 +17,5 @@
 | [0013](0013-chrome-always-1bit.md) | Chrome (status bar, button bar) is always rendered in 1-bit | Accepted |
 | [0014](0014-vertical-scroll-compositor-owned.md) | Vertical scroll: Compositor-owned state, PIL Image content interface | Accepted |
 | [0015](0015-weather-wttr-in-png.md) | Weather source: wttr.in pre-rendered PNG over data API or JS widget | Accepted |
+| [0016](0016-no-on-device-terminal.md) | No on-device terminal App; SSH is the maintenance path | Accepted |
+| [0017](0017-display-server.md) | Display Server: opt-in HTTP+HTTPS endpoint for push-rendered content | Accepted |

@@ -1,4 +1,4 @@
-<!-- spellchecker:ignore ankiweb boox noto paperwhite pnas wkhtmltoimage -->
+<!-- spellchecker:ignore ankiweb boox noto paperwhite pnas wkhtmltoimage wttr -->
 
 # [inkSink](https://github.com/remigius42/inkSink)
 
@@ -12,29 +12,23 @@ Copyright 2026 [Andreas Remigius Schmidt](https://github.com/remigius42)
 
 <img src="docs/logo.svg" alt="inkSink logo" width="300" /> <!-- markdownlint-disable-line MD033 -->
 
-A portable e-ink display device for spaced repetition learning, reading, and
-personal dashboards. **ink** = e-ink display; **Sink** = terminal node in graph
-theory where information flows to rest.
+> **Status: Proof of Concept** — Software implemented; hardware not yet assembled.
 
-```text
-Calendar API ─┐
-Weather API  ─┤
-AnkiWeb API  ─┼─> inkSink ─> E-ink Display
-RSS feeds    ─┘
-```
+A portable e-ink display device for spaced repetition learning and personal
+dashboards. **ink** = e-ink display; **Sink** = terminal node in graph theory
+where information flows to rest.
 
-**Primary use cases:**
+**Example use cases:**
 
-- **Anki spaced repetition** - Distraction-free flashcard reviews
-- **E-reader** - EPUB/PDF reading with e-ink comfort
-- **Information dashboard** - Calendar, weather, RSS, todos
-- **Text editor** - Neovim via Bluetooth keyboard
+- **Anki spaced repetition** — Distraction-free flashcard reviews
+- **Information dashboard** — Weather and other push-rendered content _(Display
+  Server planned)_
 
 **Why inkSink?**
 
 - Distraction-free by design (no notifications, no internet browsing)
-- Better for evening use than a phone — no backlight means no blue light,
-  which suppresses melatonin and delays sleep
+- Better for evening use than a phone — no backlight means no blue light, which
+  suppresses melatonin and delays sleep
   ([Chang et al., PNAS 2015](https://www.pnas.org/doi/10.1073/pnas.1418490112))
 - Multi-day battery life (5-7 hours active, days for typical usage)
 - Fast e-ink refresh (0.4s partial refresh)
@@ -47,26 +41,28 @@ If building from scratch isn't for you, these off-the-shelf devices support cust
 | Device | Price | Key advantage | Anki |
 | -- | -- | -- | -- |
 | [Onyx BOOX](https://www.boox.com/) | $250–820 | Android 15 — install Anki from Play Store directly | Native app |
-| [PineNote](https://pine64.org/devices/pinenote/) | $399 | Ships Debian Trixie (community image); SSH root access | Custom client |
-| [reMarkable Paper](https://remarkable.com/) | €399–649 | SSH root enabled by default; Vellum package manager (Toltec deprecated) | Via Vellum |
+| [PineNote](https://pine64.org/devices/pinenote/) | $399 | Ships Debian (community image); SSH root access | Custom client |
+| [reMarkable Paper](https://remarkable.com/) | €399–649 | SSH root enabled by default; Vellum package manager | Via Vellum |
 | [Kobo](https://www.kobo.com/) + [KOReader](https://github.com/koreader/koreader) | $160–260 | No jailbreak needed; cheapest hackable option | Limited |
 
 **Why build inkSink instead?**
 
-- Full Linux control — no Android abstractions, no rough Debian beta (PineNote)
-- Cheaper than all of the above
+- Full Linux control — no Android abstractions, no closed firmware
+- Cheaper than most alternatives (parts only; excludes build time)
 - Full GPIO access for custom button layout (all commercial devices are sealed)
 - Custom 7.5" display size; commercial devices are 6–10" fixed form factors
+- Silent network display — any LAN device can push content via HTTP POST
+  (planned); no commercial device exposes an open rendering API like this
 
 ## Hardware
 
 ### Components
 
-- **Raspberry Pi Zero 2 W** - 1GHz quad-core ARM, 512MB RAM, WiFi/BT
-- **Waveshare 7.5" E-Ink HAT** - 800×480 display, 0.4s partial refresh
-- **PiSugar 3** - 1200mAh battery, RTC, UPS functionality
-- **6mm tactile switches** - 6-8 buttons with 3D printed caps
-- **3D printed case** - Custom enclosure, 26mm uniform depth
+- **Raspberry Pi Zero 2 W** — 1GHz quad-core ARM, 512MB RAM, WiFi/BT
+- **Waveshare 7.5" E-Ink HAT** — 800×480 display, 0.4s partial refresh
+- **PiSugar 3** — 1200mAh battery, RTC, UPS functionality
+- **6mm tactile switches** — 6-8 buttons with 3D printed caps
+- **3D printed case** — Custom enclosure, 26mm uniform depth
 
 **Total cost:** €120-170
 
@@ -97,38 +93,45 @@ Display is ~2mm at the front, electronics stack ~22mm at the back, with a
 **Console-only system** (no desktop environment):
 
 - Raspberry Pi OS Lite (minimal RAM footprint)
-- Custom Python application (auto-starts on boot)
-- Framebuffer rendering (direct display access)
-- AnkiWeb API integration (cloud sync)
+- Custom Python application (auto-starts on boot via systemd)
+- Two-layer rendering pipeline: wkhtmltoimage content + Pillow compositor
+- Direct SPI display access via Waveshare library
+
+### Launcher
+
+- Boot menu: App selection, device status, settings, log viewer, sleep
+- Status screen: time, battery, WiFi, Bluetooth, system load, storage
 
 ### Anki reviews
 
 - Full HTML/CSS card rendering via wkhtmltoimage
 - Image support (downloads from AnkiWeb)
 - Kanji/CJK fonts (Noto Sans CJK)
-- Offline review queue with background sync
-- Partial refresh (0.4s per card, feels instant)
-- Full refresh every 10-20 cards (clears ghosting)
+- AnkiWeb sync at session start (download) and end (upload)
+- Partial refresh (0.4s per card) in 1-bit mode
+- Full refresh every N cards (configurable; clears ghosting)
 
-### E-reading
+### Weather
 
-- EPUB/PDF support (same HTML rendering pipeline)
-- Page navigation via buttons
-- Bookmark support
+- wttr.in pre-rendered PNG displayed in landscape orientation
+- Fetched on app launch; location configurable
 
-### Dashboards
+### Display Server _(planned)_
 
-- Modular widget system
-- API integration (Calendar, Weather, RSS)
-- Automatic refresh intervals
-- Low-power always-on display
+Any device on the LAN can push content to the screen without user interaction:
+
+```sh
+curl -X POST http://inksink.local:8080/render \
+  --data-binary @image.png -H "Content-Type: image/png"
+```
+
+Accepts PNG or HTML. Disabled by default (`apps.display_server.enabled` in
+config). HTTP is open (LAN trust); HTTPS is also available and supports an
+optional bearer token.
 
 ### Maintenance
 
-- SSH over WiFi
-- Bluetooth keyboard support
-- Neovim for editing
-- PiSugar web UI (battery stats, configuration)
+- Fully automated provisioning via Ansible (SSH, firewall, app deployment)
 
 ### RAM Budget
 
@@ -163,6 +166,6 @@ Full bill of materials: [hardware/bom.md](hardware/bom.md)
 1. **Configure application** (AnkiWeb credentials, preferences)
 1. **Test and iterate**
 
-**Build time:** 1-2 weekends
+**Build time:** 1-2 weekends _(estimate; not yet validated on a real device)_
 
 **Difficulty:** Intermediate (basic soldering + Python)
