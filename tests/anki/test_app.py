@@ -606,3 +606,29 @@ def test_run_anki_does_not_stop_injected_compositor():
         run_anki(MagicMock(), ih, settings, compositor)
 
     compositor.stop.assert_not_called()
+
+
+def test_run_anki_auth_error_uses_compositor_set_content_when_provided():
+    """On AuthError with compositor, run_anki uses set_content not display_full."""
+    from inksink.anki.app import run_anki
+
+    settings = {
+        "apps": {
+            "anki": {
+                "orientation": "portrait",
+                "display_mode": "1bit",
+                "ankiweb_username": "",
+                "ankiweb_password": "",
+            }
+        }
+    }
+    compositor = MagicMock()
+
+    with (
+        patch("inksink.anki.app.renderer.render", return_value=_fake_image()),
+        patch("inksink.anki.app.fill_content", return_value="<html/>"),
+        patch("inksink.anki.app.time.sleep"),
+    ):
+        run_anki(MagicMock(), MagicMock(), settings, compositor)
+
+    compositor.set_content.assert_called_once()
