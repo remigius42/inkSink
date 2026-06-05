@@ -7,7 +7,8 @@ Copyright 2026 [Andreas Remigius Schmidt](https://github.com/remigius42)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%20OS%20Trixie-lightgrey.svg)
 [![CI](https://github.com/remigius42/inkSink/actions/workflows/ci.yml/badge.svg)](https://github.com/remigius42/inkSink/actions/workflows/ci.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5b2a8a4a7ced493ba762bfa1955f8a31)](https://app.codacy.com/gh/remigius42/inkSink/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Grade Badge](https://app.codacy.com/project/badge/Grade/5b2a8a4a7ced493ba762bfa1955f8a31)](https://app.codacy.com/gh/remigius42/inkSink/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Coverage Badge](https://app.codacy.com/project/badge/Coverage/5b2a8a4a7ced493ba762bfa1955f8a31)](https://app.codacy.com/gh/remigius42/inkSink/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/remigius42/inkSink?utm_source=oss&utm_medium=github&utm_campaign=remigius42%2FinkSink&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 <img src="docs/logo.svg" alt="inkSink logo" width="300" /> <!-- markdownlint-disable-line MD033 -->
