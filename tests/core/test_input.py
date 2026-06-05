@@ -12,6 +12,24 @@ sys.modules.setdefault("RPi.GPIO", _gpio_stub)
 from inksink.core.input import InputHandler  # noqa: E402
 
 
+def test_setup_raises_hardware_not_available_when_gpio_absent():
+    from inksink.core.input import HardwareNotAvailable
+
+    h = InputHandler()
+    h._gpio = None
+    with pytest.raises(HardwareNotAvailable):
+        h.setup()
+
+
+def test_wait_for_action_raises_hardware_not_available_when_gpio_absent():
+    from inksink.core.input import HardwareNotAvailable
+
+    h = InputHandler()
+    h._gpio = None
+    with pytest.raises(HardwareNotAvailable):
+        h.wait_for_action()
+
+
 def test_setup_configures_pull_ups():
     gpio = MagicMock()
     gpio.BCM = 11
