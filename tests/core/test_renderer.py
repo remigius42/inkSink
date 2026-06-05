@@ -361,6 +361,36 @@ def test_render_does_not_truncate_image_within_max_height():
     assert img.size[1] == 800
 
 
+def test_lru_cache_put_existing_key_moves_to_end():
+    from inksink.core.renderer import _LRUCache
+
+    cache = _LRUCache(max_size=2)
+    cache.put(("a", "1bit", "portrait"), Image.new("1", (4, 4)))
+    cache.put(("b", "1bit", "portrait"), Image.new("1", (4, 4)))
+    cache.put(("a", "1bit", "portrait"), Image.new("1", (8, 8)))  # re-insert: a → end
+    # order is now b, a — adding c evicts b (oldest), not a
+    cache.put(("c", "1bit", "portrait"), Image.new("1", (4, 4)))
+    assert cache.get(("b", "1bit", "portrait")) is None  # evicted
+    assert cache.get(("a", "1bit", "portrait")) is not None  # still present
+
+
+def test_lru_cache_clear_empties_store():
+    from inksink.core.renderer import _LRUCache
+
+    cache = _LRUCache(max_size=10)
+    cache.put(("a", "1bit", "portrait"), Image.new("1", (4, 4)))
+    cache.clear()
+    assert cache.get(("a", "1bit", "portrait")) is None
+
+
+def test_convert_raises_on_unknown_mode():
+    from inksink.core.renderer import _convert
+
+    img = Image.new("RGB", (4, 4))
+    with pytest.raises(ValueError, match="mode"):
+        _convert(img, "unknown")
+
+
 def test_configure_replaces_cache_and_enforces_new_limit():
     from inksink.core import renderer
 
