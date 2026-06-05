@@ -10,7 +10,9 @@ from inksink.core.ui.buttons import (
     _button_bar_edge,
     _compute_bounding_boxes,
     _draw_button,
+    _extend_group,
     _resolve_slots,
+    _SlotGroup,
 )
 
 _PW, _PH = 480, 800  # portrait framebuffer
@@ -112,6 +114,19 @@ def test_resolve_slots_run_crosses_row_boundary_raises():
     # "c" at slot 2, "" at slots 3 and 4 — slot 4 crosses row boundary
     with pytest.raises(ValueError, match=r"slot 4: .* crosses row boundary"):
         _resolve_slots(["a", "b", "c", "", "", "d", "e", "f"])
+
+
+def test_extend_group_raises_when_no_preceding_group_at_non_zero_column():
+    # '' at slot 1 (col 1) but groups list is empty — can't extend nothing
+    with pytest.raises(ValueError, match=r"slot 1: .* cannot start a row"):
+        _extend_group([], i=1, cols=4, prev_lbl="X")
+
+
+def test_extend_group_raises_when_prior_group_is_in_different_row():
+    # Previous group ends at slot 3 (row 0); '' at slot 5 (row 1, col 1) — cross-row
+    groups = [_SlotGroup(indices=[3], label="X", state_index=3)]
+    with pytest.raises(ValueError, match=r"slot 5: .* crosses row boundary"):
+        _extend_group(groups, i=5, cols=4, prev_lbl="X")
 
 
 def test_resolve_slots_merged_state_uses_first_slot():
