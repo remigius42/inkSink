@@ -66,6 +66,21 @@ class _RequestHandler(BaseHTTPRequestHandler):
             return False
         return True
 
+    def _parse_content_length(self) -> int | None:
+        """Parse and range-check Content-Length; respond on error."""
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+        except (ValueError, TypeError):
+            self._respond(400)
+            return None
+        if content_length <= 0:
+            self._respond(411)
+            return None
+        if content_length > _MAX_BODY_BYTES:
+            self._respond(413)
+            return None
+        return content_length
+
     def _validate_render_request(
         self, parsed: urllib.parse.ParseResult
     ) -> tuple[str, str, bytes] | None:
@@ -82,16 +97,8 @@ class _RequestHandler(BaseHTTPRequestHandler):
             self._respond(400)
             return None
 
-        try:
-            content_length = int(self.headers.get("Content-Length", 0))
-        except (ValueError, TypeError):
-            self._respond(400)
-            return None
-        if content_length <= 0:
-            self._respond(411)
-            return None
-        if content_length > _MAX_BODY_BYTES:
-            self._respond(413)
+        content_length = self._parse_content_length()
+        if content_length is None:
             return None
 
         raw_ct = self.headers.get("Content-Type", "")
