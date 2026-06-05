@@ -112,6 +112,39 @@ def _call_handler(
 
 
 # ---------------------------------------------------------------------------
+# Routing
+# ---------------------------------------------------------------------------
+
+
+def test_post_to_unknown_path_returns_404():
+    assert (
+        _call_handler(_make_server(), _png_bytes(), "image/png", path="/unknown") == 404
+    )
+
+
+def test_respond_sends_status_and_ends_headers():
+    handler = _RequestHandler.__new__(_RequestHandler)
+    handler.server = _make_server()  # type: ignore[assignment]
+    with (
+        patch.object(handler, "send_response") as mock_send,
+        patch.object(handler, "end_headers") as mock_end,
+    ):
+        handler._respond(204)
+    mock_send.assert_called_once_with(204)
+    mock_end.assert_called_once_with()
+
+
+def test_log_message_delegates_to_logging_debug():
+    import logging
+
+    handler = _RequestHandler.__new__(_RequestHandler)
+    handler.server = _make_server()  # type: ignore[assignment]
+    with patch.object(logging, "debug") as mock_debug:
+        handler.log_message("hello %s", "world")
+    mock_debug.assert_called_once_with("display_server: hello %s", "world")
+
+
+# ---------------------------------------------------------------------------
 # PNG
 # ---------------------------------------------------------------------------
 

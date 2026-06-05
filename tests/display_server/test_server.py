@@ -9,6 +9,8 @@ from PIL import Image
 
 from inksink.display_server._server import DisplayServer
 
+_TEST_TOKEN = "tok"  # noqa: S105  # nosec B105 — test fixture, not a real credential
+
 _SETTINGS = {
     "apps": {
         "display_server": {
@@ -83,5 +85,43 @@ def test_start_http_only_when_certs_absent():
         ds.start()
     try:
         assert len(ds._servers) == 1
+    finally:
+        ds.stop()
+
+
+def test_start_creates_https_server_when_certs_present():
+    """When certs load successfully, both HTTP and HTTPS servers are started."""
+    settings = {
+        "apps": {
+            "display_server": {
+                "enabled": False,
+                "http_port": 8080,
+                "https_port": 8443,
+                "token": _TEST_TOKEN,
+                "orientation": "landscape",
+            }
+        }
+    }
+    ds = DisplayServer(settings)
+    mock_server = mock.MagicMock()
+    with (
+        mock.patch(
+            "inksink.display_server._server._BoundHTTPServer",
+            return_value=mock_server,
+        ) as mock_bound,
+        mock.patch("inksink.display_server._server.ssl.SSLContext"),
+        mock.patch("inksink.display_server._server.threading.Thread"),
+    ):
+        ds.start()
+    try:
+        assert mock_bound.call_count == 2
+        http_kwargs = mock_bound.call_args_list[0].kwargs
+        https_kwargs = mock_bound.call_args_list[1].kwargs
+        assert http_kwargs["is_https"] is False
+        assert http_kwargs["token"] == _TEST_TOKEN
+        assert http_kwargs["orientation"] == "landscape"
+        assert https_kwargs["is_https"] is True
+        assert https_kwargs["token"] == _TEST_TOKEN
+        assert https_kwargs["orientation"] == "landscape"
     finally:
         ds.stop()
