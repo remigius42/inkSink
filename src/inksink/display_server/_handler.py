@@ -106,7 +106,9 @@ class _RequestHandler(BaseHTTPRequestHandler):
         except _ReadTimeout:
             self._respond(408)
             return None
-        if body is None:
+        # Defensive: _read_body returns None only when buf exceeds _MAX_BODY_BYTES,
+        # which can't happen given Content-Length is already bounded above.
+        if body is None:  # pragma: no cover
             self._respond(413)
             return None
         if len(body) < content_length:
@@ -168,7 +170,9 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 break
             buf += chunk
             remaining -= len(chunk)
-            if len(buf) > _MAX_BODY_BYTES:
+            # Defensive: callers validate Content-Length ≤ _MAX_BODY_BYTES before
+            # calling _read_body, so buf can never grow past the limit in practice.
+            if len(buf) > _MAX_BODY_BYTES:  # pragma: no cover
                 return None
         return buf
 
