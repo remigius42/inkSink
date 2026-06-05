@@ -407,6 +407,64 @@ def test_logs_content_shows_journalctl_output():
     assert "line2" in content
 
 
+# ---- _flatten list branch ----
+
+
+def test_flatten_list_values_use_bracket_notation():
+    from inksink.launcher.app import _flatten
+
+    result = _flatten({"items": ["a", "b"]})
+    assert ("items[0]", "a") in result
+    assert ("items[1]", "b") in result
+
+
+# ---- journalctl failure paths ----
+
+
+def test_logs_shows_unavailable_when_journalctl_returns_nonzero():
+    display = _make_display()
+    launcher = Launcher(display, _make_input([]), _settings(), MagicMock())
+    captured_content: list[str] = []
+
+    def capture_fill(content, **_kwargs):
+        captured_content.append(content)
+        return "<html/>"
+
+    with (
+        patch(
+            "inksink.launcher.app.subprocess.run",
+            return_value=MagicMock(returncode=1, stdout=""),
+        ),
+        patch("inksink.launcher.app.fill_content", side_effect=capture_fill),
+        patch.object(launcher._input_handler, "wait_for_action", return_value="btn_1"),
+    ):
+        launcher._render_logs()
+
+    assert "unavailable" in " ".join(captured_content)
+
+
+def test_logs_shows_unavailable_when_journalctl_missing():
+    display = _make_display()
+    launcher = Launcher(display, _make_input([]), _settings(), MagicMock())
+    captured_content: list[str] = []
+
+    def capture_fill(content, **_kwargs):
+        captured_content.append(content)
+        return "<html/>"
+
+    with (
+        patch(
+            "inksink.launcher.app.subprocess.run",
+            side_effect=FileNotFoundError,
+        ),
+        patch("inksink.launcher.app.fill_content", side_effect=capture_fill),
+        patch.object(launcher._input_handler, "wait_for_action", return_value="btn_1"),
+    ):
+        launcher._render_logs()
+
+    assert "unavailable" in " ".join(captured_content)
+
+
 # ---- _format_bluetooth ----
 
 
