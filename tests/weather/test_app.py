@@ -38,6 +38,11 @@ def _fake_meta(location: str = "Home"):
     return LocationMeta(label=location, latitude="47.4", longitude="8.7")
 
 
+def test_advance_is_noop_when_no_locations():
+    app = WeatherApp(MagicMock(), MagicMock(), _settings(), _make_compositor())
+    app._advance()  # must not raise or mutate index
+
+
 def test_fetch_metadata_called_once_per_location_not_on_advance():
     """JSON metadata fetched once at init per location; _advance() must not re-fetch."""
     with patch(
@@ -118,6 +123,173 @@ def test_buttons_set_before_first_content_render():
     assert (
         first_buttons < first_content
     ), f"set_buttons must be called before set_content; got order {call_order}"
+
+
+def _make_app(locations: list[dict], input_actions: list[str] | None = None):
+    comp = _make_compositor()
+    ih = _make_input(input_actions or [])
+    with patch("inksink.weather.app.fetch_metadata", return_value=_fake_meta()):
+        app = WeatherApp(MagicMock(), ih, _settings(locations), comp)
+    return app, comp
+
+
+def test_build_meta_falls_back_when_fetch_metadata_raises():
+    from inksink.weather.client import WeatherFetchError
+
+    with patch(
+        "inksink.weather.app.fetch_metadata", side_effect=WeatherFetchError("x")
+    ):
+        app = WeatherApp(
+            MagicMock(),
+            MagicMock(),
+            _settings([{"location": "Paris", "label": "My Paris"}]),
+            _make_compositor(),
+        )
+    assert app._locations[0].label == "My Paris"
+    assert app._locations[0].latitude == ""
+    assert app._locations[0].longitude == ""
+
+
+def test_show_location_is_noop_with_no_locations():
+    app, comp = _make_app([])
+    app._show_location(0)
+    comp.set_content.assert_not_called()
+
+
+def test_show_location_renders_error_image_on_fetch_png_failure():
+    from inksink.weather.client import WeatherFetchError
+
+    app, comp = _make_app([{"location": "A"}])
+    with patch("inksink.weather.app.fetch_png", side_effect=WeatherFetchError("x")):
+        app._show_location(0)
+    comp.set_content.assert_called_once()
+
+
+def test_update_buttons_pads_shortcut_slots_with_none_for_one_location():
+    app, comp = _make_app([{"location": "Home"}])
+    app._update_buttons()
+    labels = comp.set_buttons.call_args[0][0]
+    assert labels[4] == "Home"[:8]
+    assert labels[5] is None
+    assert labels[6] is None
+    assert labels[7] is None
+
+
+def test_update_buttons_pads_when_fewer_than_four_shortcuts_configured():
+    """while-loop pad (line 126) only fires when _shortcuts has < 4 entries."""
+    comp = _make_compositor()
+    settings = {
+        "apps": {
+            "weather": {
+                "locations": [{"location": "Home"}],
+                "cycle_speed_seconds": 30,
+                "location_shortcuts": [0],
+            }
+        }
+    }
+    with patch("inksink.weather.app.fetch_metadata", return_value=_fake_meta("Home")):
+        app = WeatherApp(MagicMock(), MagicMock(), settings, comp)
+    app._update_buttons()
+    labels = comp.set_buttons.call_args[0][0]
+    assert labels[4] == "Home"[:8]
+    assert labels[5] is None
+    assert labels[6] is None
+    assert labels[7] is None
+
+
+def test_pause_resume_toggles_cycling_and_timer():
+    app, _ = _make_app([{"location": "A"}])
+    assert app._cycling is True
+
+    with (
+        patch.object(app, "_stop_timer") as stop,
+        patch.object(app, "_restart_timer") as restart,
+    ):
+        app._handle_pause_resume_button()
+        assert app._cycling is False
+        stop.assert_called_once()
+        restart.assert_not_called()
+
+        app._handle_pause_resume_button()
+        assert app._cycling is True
+        restart.assert_called_once()
+
+
+def test_handle_next_button_wraps_from_last_to_first():
+    app, _ = _make_app([{"location": "A"}, {"location": "B"}])
+    app._index = 1
+    with (
+        patch("inksink.weather.app.fetch_png", return_value=MagicMock()),
+        patch("inksink.weather.app.render_content", return_value=MagicMock()),
+        patch.object(app, "_restart_timer"),
+    ):
+        app._handle_next_button()
+    assert app._index == 0
+
+
+def test_handle_shortcut_button_jumps_to_target_location():
+    app, _ = _make_app([{"location": "A"}, {"location": "B"}])
+    app._index = 0
+    with (
+        patch("inksink.weather.app.fetch_png", return_value=MagicMock()),
+        patch("inksink.weather.app.render_content", return_value=MagicMock()),
+        patch.object(app, "_restart_timer"),
+    ):
+        app._handle_shortcut_button("btn_6")  # slot 1 → shortcuts[1]=1 → location B
+    assert app._index == 1
+
+
+def test_handle_prev_button_wraps_from_first_to_last():
+    app, _ = _make_app([{"location": "A"}, {"location": "B"}])
+    app._index = 0
+    with (
+        patch("inksink.weather.app.fetch_png", return_value=MagicMock()),
+        patch("inksink.weather.app.render_content", return_value=MagicMock()),
+        patch.object(app, "_restart_timer"),
+    ):
+        app._handle_prev_button()
+    assert app._index == 1
+
+
+def _run_loop_with(app, actions: list[str]) -> None:
+    """Drive _run_action_loop with a fixed sequence, ending with btn_1 to exit."""
+    app._input_handler.wait_for_action.side_effect = actions
+    app._run_action_loop()
+
+
+def test_action_loop_btn1_calls_menu_handler():
+    app, _ = _make_app([{"location": "A"}])
+    with patch.object(app, "_handle_menu_button") as h:
+        _run_loop_with(app, ["btn_1"])
+    h.assert_called_once()
+
+
+def test_action_loop_btn2_calls_prev_handler():
+    app, _ = _make_app([{"location": "A"}])
+    with patch.object(app, "_handle_prev_button") as h:
+        _run_loop_with(app, ["btn_2", "btn_1"])
+    h.assert_called_once()
+
+
+def test_action_loop_btn3_calls_pause_resume_handler():
+    app, _ = _make_app([{"location": "A"}])
+    with patch.object(app, "_handle_pause_resume_button") as h:
+        _run_loop_with(app, ["btn_3", "btn_1"])
+    h.assert_called_once()
+
+
+def test_action_loop_btn4_calls_next_handler():
+    app, _ = _make_app([{"location": "A"}])
+    with patch.object(app, "_handle_next_button") as h:
+        _run_loop_with(app, ["btn_4", "btn_1"])
+    h.assert_called_once()
+
+
+def test_action_loop_unknown_button_calls_shortcut_handler():
+    app, _ = _make_app([{"location": "A"}])
+    with patch.object(app, "_handle_shortcut_button") as h:
+        _run_loop_with(app, ["btn_5", "btn_1"])
+    h.assert_called_once_with("btn_5")
 
 
 def test_empty_locations_shows_message_and_returns():
