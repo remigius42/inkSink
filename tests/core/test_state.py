@@ -1,4 +1,4 @@
-# spellchecker:ignore delenv memavailable memtotal
+# spellchecker:ignore delenv memavailable memtotal nocolon
 
 from dataclasses import FrozenInstanceError
 from unittest.mock import MagicMock, patch
@@ -43,6 +43,21 @@ def test_wifi_status_sentinel_is_immutable():
         result = wifi_status()
     with pytest.raises(FrozenInstanceError):
         result.connected = True  # type: ignore[misc]
+
+
+def test_parse_wifi_line_returns_none_when_no_colon():
+    from inksink.core.state import _parse_wifi_line
+
+    assert _parse_wifi_line("nocolon") is None
+
+
+def test_wifi_sentinel_when_nmcli_returns_nonzero(mocker):
+    mocker.patch(
+        "inksink.core.state.subprocess.run",
+        return_value=mocker.Mock(returncode=1, stdout=""),
+    )
+    result = wifi_status()
+    assert result == WifiStatus(connected=False, ssid=None, strength=-1)
 
 
 def test_wifi_sentinel_when_nmcli_raises():
@@ -250,3 +265,21 @@ def test_bluetooth_status_enabled_with_connected_device(mocker):
     result = bluetooth_status()
     assert result.enabled is True
     assert "MyHeadset" in result.connected_devices
+
+
+def test_bluetooth_status_device_without_friendly_name_uses_mac(mocker):
+    show_result = mocker.MagicMock(returncode=0, stdout="Powered: yes\n")
+    devices_result = mocker.MagicMock(returncode=0, stdout="Device AA:BB:CC:DD:EE:FF\n")
+    mocker.patch(
+        "inksink.core.state.subprocess.run",
+        side_effect=[show_result, devices_result],
+    )
+    result = bluetooth_status()
+    assert "AA:BB:CC:DD:EE:FF" in result.connected_devices
+
+
+def test_bluetooth_status_eq_returns_not_implemented_for_wrong_type():
+    assert (
+        BluetoothStatus(enabled=True, connected_devices=[]).__eq__("not a bt")
+        is NotImplemented
+    )
