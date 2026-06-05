@@ -20,6 +20,30 @@ def _stub_wkhtmltoimage(png_bytes: bytes):
     return _run
 
 
+def test_startup_returns_compositor_when_display_provided():
+    from inksink.core import startup
+
+    display = MagicMock()
+    mock_compositor = MagicMock()
+    with (
+        patch("inksink.core.startup.renderer.configure_from_settings"),
+        patch(
+            "inksink.core.ui.compositor.Compositor", return_value=mock_compositor
+        ) as compositor_cls,
+    ):
+        result = startup.startup({}, display=display, active_app="weather")
+
+    compositor_cls.assert_called_once_with(display, {"_active_app": "weather"})
+    assert result is mock_compositor
+
+
+def test_startup_returns_none_without_display():
+    from inksink.core import startup
+
+    with patch("inksink.core.startup.renderer.configure_from_settings"):
+        assert startup.startup({}) is None
+
+
 def test_startup_configures_renderer_cache_from_settings():
     from inksink.core import renderer, startup
 
