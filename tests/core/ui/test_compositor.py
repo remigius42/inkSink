@@ -47,6 +47,11 @@ def _settings(
 # ---------------------------------------------------------------------------
 
 
+def test_scroll_returns_false_false_when_no_content_image():
+    comp = Compositor(_make_display(), _settings())
+    assert comp._scroll(1) == (False, False)
+
+
 def test_start_arms_timer():
     comp = Compositor(_make_display(), _settings())
     assert comp._timer is None
