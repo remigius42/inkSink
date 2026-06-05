@@ -144,3 +144,9 @@ def test_sync_up_offline_skips_sync():
         client.sync_up()
 
     mock_col.sync_collection.assert_not_called()
+
+
+def test_close_closes_collection():
+    client, mock_col = _make_client()
+    client.close()
+    mock_col.close.assert_called_once()
