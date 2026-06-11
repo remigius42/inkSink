@@ -3,8 +3,7 @@ include <params.scad>
 
 _btn_d    = btn_hole_diameter - btn_hole_tolerance;  // 9.8mm
 _btn_h    = 2;    // cap height (mm)
-// TODO: Remove 3.5 too wide, 3.25 too tight
-_stem_d   = 3.35;  // tactile switch stem diameter for socket (mm)
+_stem_d   = 3.35;  // tactile switch stem diameter for socket (mm) (3.5 too wide, 3.25 too tight)
 _sock_d   = 1;    // socket depth (mm)
 _kerf_l   = _btn_d / 2;  // kerf cut length (half button diameter)
 _kerf_w   = 0.5;  // kerf cut width (mm)

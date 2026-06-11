@@ -47,31 +47,31 @@ module pi_stack_ref() {
 
     // South-face (Y=0) connectors — shown as shallow bumps at inner PCB face only;
     // protrusion_ref handles the outward extent for wall cutouts
-    // mini HDMI (Pi Zero): X centre=12.4, 12×5mm
+    // mini HDMI (Pi Zero): X centre=12.65, 12.5×5mm (right edge +0.5mm)
     color("dimgray", 0.8)
         translate([12.4 - 6, -0.5, 7.5])
-            cube([12, 2.5, 5]);
-    // µUSB power (Pi Zero): X=41.4, ~8×3mm
+            cube([12.5, 2.5, 5]);
+    // µUSB power (Pi Zero): X=41.4, 9×3.5mm (sides ±0.5mm, bottom +0.5mm)
     color("dimgray", 0.8)
-        translate([41.4 - 4, -0.5, 7.5])
-            cube([8, 2.5, 3]);
+        translate([41.4 - 4.5, -0.5, 7.25])
+            cube([9, 2.5, 3.5]);
     // µUSB OTG (Pi Zero): X=54
     color("dimgray", 0.8)
-        translate([54 - 4, -0.5, 7.5])
-            cube([8, 2.5, 3]);
-    // USB-C (PiSugar): X=53.5, 9×3.5mm, Z=1..4.5
-    color("steelblue", 0.8)
-        translate([53.5 - 4.5, -0.5, 1])
+        translate([54 - 4.5, -0.5, 7.25])
             cube([9, 2.5, 3.5]);
-    // PiSugar edge buttons: X=11.5 (power) and X=43.5 (custom)
+    // USB-C (PiSugar): X=53.25, 9.5×4.0mm, Z=0.5..4.5 (left +0.5mm, bottom +0.5mm)
+    color("steelblue", 0.8)
+        translate([53.5 - 5.0, -0.5, 0.5])
+            cube([9.5, 2.5, 4.0]);
+    // PiSugar edge buttons: X=10.5 (power) and X=42.5 (custom)
     color("steelblue", 0.6)
-        for (xc = [11.5, 43.5])
+        for (xc = [10.5, 42.5])
             translate([xc - 3, -0.5, 0.5])
                 cube([6, 2.5, 3]);
 
     // SD card (west/left face, X=0): protrudes 2.3mm beyond PCB; 12mm wide, 1.25mm tall
     color("silver", 0.8)
-        translate([-2.3, elec_l - 5.5 - 12, 7.5])
+        translate([-2.3, elec_l - 7.0 - 12, 7.5])
             cube([4.3, 12, 1.25]);
 }
 
@@ -79,10 +79,10 @@ module pi_stack_ref() {
 // Z runs from 0 to `depth`; caller sets translation and depth for cutout vs window use.
 // Origin matches pi_stack_protrusion_ref coordinate system (X/Y from Pi stack corner).
 module led_indicator_shapes(depth) {
-    // Power LED: 1×2mm at X=1.5, Y=17.5
-    translate([2 - 0.5, 18.5 - 1, 0]) cube([1, 2, depth]);
-    // Indicator LEDs ×4: 7.5×2mm strip at X=15, Y=2
-    translate([15, 3 - 1, 0]) cube([7.5, 2, depth]);
+    // Power LED: 1×2mm at X=1.5, Y=18.0
+    translate([2 - 0.75, 19.0 - 1, 0]) cube([1.5, 2, depth]);
+    // Indicator LEDs ×4: 8×2mm strip at X=14.5, Y=1.0
+    translate([14.5, 3 - 2, 0]) cube([8, 2, depth]);
 }
 
 // Protrusion blocks for every connector/button that needs a wall cutout.
@@ -95,77 +95,93 @@ module pi_stack_protrusion_ref(cutout_reach = wall_t + 1) {
 
     // --- LEFT FACE (X=0): SD card slot (friction-fit, stepped for finger access) ---
     color("red", 0.4) {
-        _sd_y0 = elec_l - 5.5 - 12;  // 12.5mm from Y=0
+        _sd_y0 = elec_l - 7.0 - 12;  // 11.0mm from Y=0
         // Inner slot: snug fit for card (12mm wide, 1.25mm tall)
         translate([-cutout_reach, _sd_y0, 7.5])
             cube([cutout_reach + 2.3 + 2, 12, 1.25 + tol]);
-        // Outer finger-access recess: 15mm wide, 5mm tall, wall_t - 0.5mm lip
+        // Outer finger-access recess: 15mm wide, 5mm tall, wall_t - 1mm lip
+        // (1mm lip in the 1.5mm side-wall zones keeps them printable; thinner
+        // lips there were getting dropped during slicing)
         translate([-cutout_reach, _sd_y0 - 1.5, 7.5 - (5 - 1.25) / 2])
-            cube([cutout_reach - 0.5, 15, 5]);
+            cube([cutout_reach - 1.3, 15, 5]);
+        // Top wall (above inner slot, slit width only): cut to the original
+        // deeper depth (0.5mm lip) so it stays open as a fingernail gap above
+        // the card's top edge, without weakening the side walls
+        translate([-cutout_reach, _sd_y0, 7.5 + 1.25 + tol])
+            cube([cutout_reach - 0.5, 12, 1.875 - tol]);
     }
 
     // --- BOTTOM FACE (Y=0): Pi Zero connectors on PCB top (Z=7.5) ---
     // Stepped cutout: inner = connector body, outer = plug housing clearance
     color("red", 0.4) {
-        // mini HDMI: centre X=12.4, inner 12×5mm, housing 20×12mm, protrusion 8.5mm
-        translate([12.4, 0, 7.5 + 2.5])
-            connector_stepped_cutout(12, 5, 20, 12, 8.5, cutout_reach, wall_t);
-        // µUSB power (X=41.4): housing_w 11→11.9; right edge 47.35 overlaps combined rect by 0.1mm (no coplanar face)
-        translate([41.4, 0, 7.5 + 1.5])
-            connector_stepped_cutout(8, 3, 11.9, 6.5, 3, cutout_reach, wall_t);
-        // µUSB OTG (X=54): outer=false — shared with USB-C combined pocket below
-        translate([54, 0, 7.5 + 1.5])
-            connector_stepped_cutout(8, 3, 11, 6.5, 3, cutout_reach, wall_t, outer=false);
+        // mini HDMI: centre X=12.65, inner 12.5×5mm (+0.5mm right), housing 20×12mm, protrusion 8.5mm
+        translate([12.65, 0, 7.5 + 2.5])
+            connector_stepped_cutout(12.5, 5, 20, 12, 8.5, cutout_reach, wall_t);
+        // µUSB power (X=41.4): inner 9×3.5mm (sides ±0.5mm, bottom +0.5mm); housing_w 11.9
+        translate([41.4, 0, 7.5 + 1.25])
+            connector_stepped_cutout(9, 3.5, 11.9, 6.5, 3, cutout_reach, wall_t);
+        // µUSB OTG (X=54): inner 9×3.5mm; outer=false — shared with USB-C combined pocket below
+        translate([54, 0, 7.5 + 1.25])
+            connector_stepped_cutout(9, 3.5, 11, 6.5, 3, cutout_reach, wall_t, outer=false);
     }
 
     // --- BOTTOM FACE (Y=0): PiSugar connectors (approx Z=1..5) ---
     color("red", 0.4) {
-        // Power button (X=11.5) and custom button (X=43.5): flex tab, hinge on left short edge.
+        // Power button (X=10.5) and custom button (X=42.5): flex tab, hinge on left short edge.
         // Tab bottom aligned with HDMI outer bottom; height 4mm.
-        // Three U-slot cuts free the tab; interior pocket thins hinge to 0.8mm in Y.
+        // Three U-slot cuts free the tab; interior pocket thins hinge to 0.6mm in Y.
         _hdmi_z    = 7.5 + 2.5;               // HDMI centre Z
         _hdmi_oh   = 12;                       // HDMI outer housing height
         _btn_z0    = -btn_slot_kerf / 2;       // shift down so top slot's top edge = HDMI outer bottom
         _btn_tab_h = _hdmi_z - _hdmi_oh / 2;  // = 4; top of cut aligns with HDMI outer bottom
-        _pillar_w  = 0.5;                      // anti-droop pillar width (1 nozzle)
-        for (xc = [11.5, 43.5]) {
+        // Hinge boundary fixed at the original 0.8mm hinge's centre + half-width
+        // (xc-3+0.4+0.4); widening btn_hinge_w extends the flexing beam rightward
+        // from this boundary, into the tab area already freed by the top/bottom slots.
+        _hinge_c = -3 + 0.4;
+        for (xc = [10.5, 42.5]) {
+            _hinge_x1 = xc + _hinge_c + 0.4;
             // Right (free-side) slot: split to protect pillar Z range.
             // Right half (past pillar): full height.
             translate([xc + 3, -cutout_reach, _btn_z0 - btn_slot_kerf/2])
-                cube([btn_slot_kerf/2, cutout_reach + 0.1, _btn_tab_h + btn_slot_kerf]);
+                cube([btn_slot_kerf_x/2, cutout_reach + 0.1, _btn_tab_h + btn_slot_kerf]);
             // Left half (over pillar X range): starts above pillar top, connects to top slot.
-            translate([xc + 3 - btn_slot_kerf/2, -cutout_reach, _btn_z0 + btn_slot_kerf/2])
-                cube([btn_slot_kerf/2, cutout_reach + 0.1, _btn_tab_h]);
-            // Top slot
-            translate([xc - 3 + btn_hinge_w, -cutout_reach, _btn_z0 + _btn_tab_h - btn_slot_kerf/2])
-                cube([6 - btn_hinge_w, cutout_reach + 0.1, btn_slot_kerf]);
-            // Bottom slot: continuous cut up to end pillar; end pillar Y-split to breakaway skins
-            let (fx0 = xc - 3 + btn_hinge_w,
-                 epx = xc + 3 - btn_slot_kerf/2 - _pillar_w + 0.25) {
-                translate([fx0, -cutout_reach, _btn_z0 - btn_slot_kerf/2])
-                    cube([epx - fx0, cutout_reach + 0.1, btn_slot_kerf]);
-                // End pillar Y-split: outer 0.5mm + inner 0.5mm skins, 1mm gap
-                translate([epx, -(wall_t - 0.5), _btn_z0 - btn_slot_kerf/2])
-                    cube([_pillar_w, wall_t - 1.0, btn_slot_kerf]);
-            }
-            // Hinge thinning: pocket on interior face reduces hinge wall to 0.8mm
-            translate([xc - 3, -(wall_t - 0.8), _btn_z0])
-                cube([btn_hinge_w, wall_t - 0.8 + 0.1, _btn_tab_h]);
+            translate([xc + 3 - btn_slot_kerf_x/2, -cutout_reach, _btn_z0 + btn_slot_kerf/2])
+                cube([btn_slot_kerf_x/2, cutout_reach + 0.1, _btn_tab_h]);
+            // Top slot: top edge fixed at _btn_tab_h (HDMI outer bottom), independent
+            // of the bottom kerf (_btn_z0) — so changing either kerf doesn't shift it
+            translate([_hinge_x1, -cutout_reach, _btn_tab_h - btn_slot_kerf_top])
+                cube([xc + 3 - _hinge_x1, cutout_reach + 0.1, btn_slot_kerf_top]);
+            // Bottom slot: complete cut, full width to the free-side slot boundary.
+            // No built-in anti-droop pillar — see hinge-print-supports.scad for
+            // standalone tower objects that sit in this gap as printable
+            // supports, as an alternative to slicer-generated supports.
+            translate([_hinge_x1, -cutout_reach, _btn_z0 - btn_slot_kerf/2])
+                cube([xc + 3 - _hinge_x1, cutout_reach + 0.1, btn_slot_kerf]);
+            // Hinge thinning: pocket on interior face reduces hinge wall to 0.6mm.
+            // Starts at the fixed wall/tab boundary (_hinge_x1) and extends rightward
+            // into the tab area (already freed top/bottom by the slots above), so the
+            // thinned strip can flex along its full length as a beam.
+            translate([_hinge_x1, -(wall_t - 0.6), _btn_z0])
+                cube([btn_hinge_w, wall_t - 0.6 + 0.1, _btn_tab_h]);
+            // Back relief: removes 0.25mm from the interior face of the tab (rest of width,
+            // excluding hinge) so the tab doesn't press the PiSugar button at rest
+            translate([_hinge_x1, -0.25, _btn_z0])
+                cube([xc + 3 - _hinge_x1, 0.25 + 0.1, _btn_tab_h]);
         }
-        // USB-C (X=53.5): inner 9×3.5mm, housing 12.5×6.5mm, protrusion ~3mm
+        // USB-C (X=53.25): inner 9.5×4.5mm (left +0.5mm, bottom +1.0mm), housing 12.5×6.5mm, protrusion ~3mm
         // outer=false: combined outer pocket below covers µUSB ×2 + USB-C together
-        translate([53.5, 0, 1 + 1.75])
-            connector_stepped_cutout(9, 3.5, 12.5, 6.5, 3, cutout_reach, wall_t, outer=false);
+        translate([53.25, 0, 2.25])
+            connector_stepped_cutout(9.5, 4.5, 12.5, 6.5, 3, cutout_reach, wall_t, outer=false);
         // Combined outer pocket for right µUSB + USB-C: X span = USB-C outer width (contains right µUSB)
-        translate([53.5 - 12.5/2, -cutout_reach, 1 + 1.75 - 6.5/2])
-            cube([12.7, cutout_reach - 0.5, 7.5 + 1.5 + 6.5/2 - (1 + 1.75 - 6.5/2)]);
+        translate([53.25 - 12.5/2, -cutout_reach, 2.5 - 6.5/2])
+            cube([12.95, cutout_reach - 0.5, 7.5 + 1.25 + 6.5/2 - (2.5 - 6.5/2)]);
     }
 
     // --- BACK FACE (Z=0): PiSugar PCB — access holes through back plate ---
     // Y measured from south/USB-C edge (Y=0 in assembled coords).
     color("blue", 0.4) {
         // Reset button at X=20.5, Y=5: 1.5mm diameter access hole (always a through-hole)
-        translate([20.5, 5, -cutout_reach]) cylinder(d=1.5, h=cutout_reach + tol, $fn=16);
+        translate([20.5, 5, -cutout_reach]) cylinder(d=2.25, h=cutout_reach + tol, $fn=16);
         // LED windows — shared module; here used as through-hole cutouts
         translate([0, 0, -cutout_reach]) led_indicator_shapes(cutout_reach + tol);
     }

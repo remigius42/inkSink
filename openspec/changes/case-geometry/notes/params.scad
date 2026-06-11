@@ -1,12 +1,16 @@
+// spellchecker:ignore centreline counterbore datasheet elec usbc waveshare
 // --- Display ---
-display_w        = 112.5;  // display panel width  (mm) — portrait
-display_h        = 170;    // display panel height (mm) — portrait
-disp_thickness   =   1.25; // display panel thickness (mm)
-screen_area_w    = 100;    // active screen width  (mm)
-screen_area_h    = 165;    // active screen height (mm)
-display_border_wide  =  9.5;  // wide border (long edge, assumed right; TBD after driver rotation)
-display_border_narrow=  2.5;  // narrow border (long edge)
-display_border_short =  2;    // short-edge border (top and bottom)
+// Waveshare 7.5inch e-Paper V2 (800×480). Datasheet:
+// https://www.waveshare.com/w/upload/6/60/7.5inch_e-Paper_V2_Specification.pdf
+display_w        = 111.2;  // display panel width  (mm) — portrait
+display_h        = 170.2;  // display panel height (mm) — portrait
+disp_thickness   =   1.25; // display panel thickness (mm) — datasheet 1.18; 1.25 gives 0.07mm extra shelf clearance
+screen_area_w    =  97.92; // active screen width  (mm)
+screen_area_h    = 163.2;  // active screen height (mm)
+display_border_wide  =  9.78; // wide border (long edge, right side; = display_w − display_border_narrow − screen_area_w)
+display_border_narrow=  3.5;  // narrow border (long edge, left/top/bottom = 1.2+1.5+0.8mm from datasheet)
+display_border_short =  3.5;  // short-edge border (top and bottom)
+disp_shift           =  0.6;  // additional downward Y offset on display; creates 1mm stopper lip on upper L-blocks
 
 // --- Cavities (back shell interior) ---
 elec_w         =  65;    // Pi Zero width  (mm)
@@ -30,8 +34,10 @@ tol            = 0.2;    // FDM clearance on each mating face (mm)
 wall_t         = 2;      // nominal wall thickness (mm)
 
 // --- PiSugar flex-tab buttons (south wall) ---
-btn_hinge_w   = 0.8;  // hinge strip width (mm) — right short edge, in-layer bending
-btn_slot_kerf = 0.5;  // slot kerf width (mm) — 1 nozzle diameter
+btn_hinge_w     = 2;    // hinge strip width (mm) — right short edge, in-layer bending; flexing beam between fixed wall (_hinge_x1) and tab
+btn_slot_kerf   = 1.0;  // slot kerf width (mm) — bottom horizontal slot (Z-direction gap), 0.7 will fuse to material below
+btn_slot_kerf_top = 0.75; // slot kerf width (mm) — top horizontal slot (Z-direction gap)
+btn_slot_kerf_x = 0.5;  // side slot kerf width (mm) — vertical free-side slot (X-direction gap); wider to prevent fusion
 
 // --- Button area (front face, lower section below display) ---
 btn_area_h     =  35;    // height of button zone at bottom of front face (mm)
@@ -41,8 +47,14 @@ btn_hole_tolerance = 0.2;
 btn_hole_diameter = 10; // button hole diameter (mm) — physical cap sized to fit with tol clearance
 btn_fillet_r   =   2;    // fillet radius on button hole outer edge (mm)
 btn_zone_w     = case_w / btn_cols;   // each button is centred in its zone
-btn_row_y1     = btn_area_h / 2 - 7;  // bottom row y centre
-btn_row_y2     = btn_area_h / 2 + 7;  // top row y centre (closer to display)
+btn_row_y1     = btn_area_h / 2 - 10;  // bottom row y centre
+btn_row_y2     = btn_area_h / 2 + 4;  // top row y centre (closer to display)
+
+// --- Carrier switch layout (shared with carrier.scad) ---
+_sw            =  6;    // switch body footprint (mm)
+_margin_y      =  1;    // Y margin beyond outermost switch edges (mm)
+_loc_y1        = _sw / 2 + _margin_y;                   // 4mm  — bottom row centre in carrier coords
+_loc_y2        = _loc_y1 + (btn_row_y2 - btn_row_y1);  // 18mm — top row centre in carrier coords
 
 // --- Magnet recesses (back plate inner face) ---
 magnet_d            = 15;   // diameter (mm) — derived from PiSugar image; tune after measuring
@@ -53,9 +65,9 @@ rabbet_w       = 1;      // rabbet width into inner wall face (mm)
 rabbet_d       = 1.5;    // rabbet depth from mating face (mm) — 2mm coincided with HDMI outer top
 
 // --- M2 fasteners ---
-screw_boss_id  = 2.4;    // screw shank clearance diameter (mm)
-screw_head_d   = 3.8;    // screw head diameter (mm) — M2 button head
-screw_head_h   = 1.4;    // screw head height (mm) — sinks fully in 2mm wall
+screw_boss_id  = 2.1;    // screw shank clearance diameter (mm)
+screw_head_d   = 4.0;    // screw head diameter (mm) — M2 button head, +clearance for circular-hole droop
+screw_head_h   = wall_t; // screw head height (mm) — counterbore cuts through full wall thickness
 screw_depth    = 25;     // total clearance hole depth from exterior (mm)
 nut_af         = 4;      // hex nut across-flats (mm)
 nut_t          = 1.6;    // hex nut thickness (mm)
@@ -70,14 +82,16 @@ usbc_notch_h   =   4;    // notch height (mm)
 
 // --- Derived positions (all dependencies above) ---
 // Y=0 at bottom (USB-C / south face); X=0 at left inner wall
-_elec_x  = wall_t;                   // Pi Zero left edge
+_elec_x  = wall_t + 0.3;              // Pi Zero left edge (0.3mm right of inner wall; SD card tip flush with exterior)
 _elec_y  = wall_t;                   // Pi Zero bottom edge (USB-C face)
-_bat_x   = wall_t + elec_w - bat_w;  // battery right edge aligned with Pi Zero right edge
+_bat_x   = _elec_x + elec_w - bat_w; // battery right edge aligned with Pi Zero right edge
 _bat_y   = wall_t + elec_l;          // battery bottom edge above Pi Zero
-_hat_x   = wall_t + elec_w;          // HAT left edge = Pi Zero right edge
-_hat_y   = wall_t;                   // HAT bottom edge flush with Pi Zero
 // Display: active area centred; wide border on right long edge
 _screen_x = (case_w - screen_area_w) / 2;   // active screen X centre in case
 _disp_x   = _screen_x - display_border_narrow; // panel left edge (narrow border on left)
 _disp_y   = btn_area_h + (case_h - btn_area_h - display_h) / 2;  // panel vertically centred above buttons
+// HAT holder pegs: centred between left and middle display column pads;
+// HAT (66mm long edge along X, rotated 90°) holes 57.5mm apart, 4.25mm in from each end
+_hat_peg_x = (_disp_x + 10 + 15/2 + _disp_x + (display_w - 15)/2 + 15/2) / 2;
+_hat_peg_y = _disp_y - disp_shift + (display_h - 15) / 2 + 15 + 27;
 // (boss_inset removed — corner bosses replaced by side-entry screw towers)

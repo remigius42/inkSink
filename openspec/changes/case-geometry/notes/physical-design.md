@@ -1,4 +1,4 @@
-<!-- spellchecker:ignore elec insertable -->
+<!-- spellchecker:ignore datasheet elec insertable waveshare -->
 
 # Physical Design Reference
 
@@ -13,28 +13,29 @@ All dimensions verified by direct measurement unless noted.
 | Width | **135mm** | 135mm clears 4mm nut towers (0.9mm walls) with 1.5mm margin right of display panel |
 | Height | **210mm** | 2 + 170 (panel) + 35 (button area) + 2 = 209 → 210 |
 | Front depth | 2mm | front bezel thickness |
-| Back depth | 20mm | electronics stack 15.7mm + 2mm wall = 17.7mm min; 20mm gives 2.3mm clearance — **unconfirmed, verify fits** |
+| Back depth | 20mm | electronics stack 15.7mm + 2mm wall = 17.7mm min; 20mm gives 2.3mm clearance |
 | Wall thickness | 2mm | nominal |
 
 ---
 
-## Display (Waveshare 7.5")
+## Display (Waveshare 7.5" e-Paper V2, 800×480)
 
-| Parameter | Value |
-| -- | -- |
-| Panel width | 112.5mm |
-| Panel height | 170mm |
-| Panel thickness | 1.25mm |
-| Active screen width | 100mm |
-| Active screen height | 165mm |
-| Border — one long edge | **9.5mm** (assumed right; TBD on driver rotation) |
-| Border — long edge (narrow) | 2.5mm |
-| Border — short edges (top/bottom) | 2mm each |
+Datasheet:
+[7.5inch\_e-Paper\_V2\_Specification.pdf](https://www.waveshare.com/w/upload/6/60/7.5inch_e-Paper_V2_Specification.pdf)
 
-**Width centering:** 2 (shell) + 9.5 (border) + 100 (active) + 9.5 (border) + 2
-(shell) = 123mm minimum; case is 135mm to clear M2 nut towers (3.6mm) with 1.9mm
-margin right of display. Panel sits flush against the wide-border side wall;
-active area is centred.
+| Parameter | Value | Source |
+| -- | -- | -- |
+| Panel width | **111.2mm** ±0.2 | datasheet outline |
+| Panel height | **170.2mm** ±0.2 | datasheet outline |
+| Panel thickness | 1.18mm (modelled as 1.25mm) | datasheet; extra 0.07mm gives shelf clearance |
+| Active screen width | **97.92mm** ±0.1 | datasheet AA |
+| Active screen height | **163.2mm** ±0.1 | datasheet AA |
+| Border — left / top / bottom | **3.5mm** (1.2 + 1.5 + 0.8) | datasheet PS/FPL/AA offsets |
+| Border — right (wide) | **9.78mm** (= 111.2 − 3.5 − 97.92) | derived |
+
+**Width centering:** active area centred in case (`_screen_x = (case_w −
+screen_area_w) / 2 = 18.54mm`); panel left edge at `_disp_x = _screen_x −
+display_border_narrow = 15.04mm`.
 
 ---
 
@@ -85,10 +86,10 @@ Board: 65mm × 30mm, landscape. GPIO at top long edge.
 | Length (into board) | 15.3mm total; 2.3mm protrudes beyond PCB |
 | Height above PCB face | 1.25mm |
 
-> **⚠ Design note:** SD card protrudes 2.3mm beyond the PCB left edge, but wall
-> thickness is 2mm — the card sticks 0.3mm past the case exterior. The left wall
-> needs a slot cutout wide enough for the card (12mm) and deep enough to clear
-> the protrusion.
+> **Design note:** SD card protrudes 2.3mm beyond the PCB left edge. Pi stack
+> shifted 0.3mm right (`_elec_x = wall_t + 0.3`) so the card tip lands flush
+> with the exterior face. The left wall still needs a slot cutout (12mm wide,
+> ≥2mm deep) for card access.
 
 **Bottom long edge connectors** (X = centre from left edge):
 
@@ -117,20 +118,25 @@ points south (down) after 180° rotation around X axis.
 | USB-C input | 53.5mm (= 11.5mm from right) | edge-mounted, faces down |
 
 **Button actuation:** flex tab printed into the south wall. Three 0.5mm slot
-cuts (U-shape) free a 6mm × 4mm × 2mm tab; a 0.8mm strip on the right short edge
-remains as the hinge. Hinge runs in the case-depth (Z) direction = in-layer
-bending under print-Z-up orientation → strong in PLA. Tab Z range: wall_t to
-wall_t+4mm (local Z=0–4), starting just above the base plate and staying below
-the USB-C outer housing top (~6mm local). No separate printed cap; no glue.
+cuts (U-shape) free a 6mm × 4mm × 2mm tab. The hinge is a 2mm-wide (X) × 0.6mm
+(Y) flexing beam, thinned on the interior face, starting at the fixed
+wall/tab boundary and extending into the tab area (already freed top/bottom by
+the slots) so it can flex along its full length. Hinge fold-line runs in the
+case-depth (Z) direction = in-layer bending under print-Z-up orientation →
+strong in PLA. Tab Z range: wall_t to wall_t+4mm (local Z=0–4), starting just
+above the base plate and staying below the USB-C outer housing top (~6mm
+local). No separate printed cap; no glue.
 
-**Anti-droop pillar:** a single 0.5×0.5×0.5mm pillar at the free end of each tab
-prevents the bottom-slot overhang from drooping during printing. The pillar is
-Y-split (outer 0.5mm skin + inner 0.5mm skin, 1mm gap) so it snaps cleanly on
-first press. To minimize snap force without going below nozzle resolution, the
-pillar is shifted 0.25mm into the right-slot X zone; the right slot is split so
-its left half skips the pillar Z range, leaving the pillar intact but with only
-0.25mm of its width contacting the tab — the right half hangs free into the slot
-void.
+**Back relief:** the interior face of the tab (excluding the hinge) is thinned
+by an additional 0.25mm, leaving 1.75mm thickness there, so the tab does not
+press the PiSugar button at rest.
+
+**Anti-droop print supports:** the bottom slot at the free end of each tab is
+a complete cut (no built-in pillar). `hinge-print-supports.scad` defines
+`hinge_print_supports()`: 4 standalone 0.5mm × 0.5mm × `btn_slot_kerf`-tall
+towers (2 per tab) positioned inside the slot gap, placeable as separate
+objects on the print bed to support the tab overhang. If not used, rely on
+slicer-generated supports for that overhang instead.
 
 **South wall outer pockets:** right µUSB (OTG, X=54) and USB-C (X=53.5) outer
 pockets are merged into one combined cutout (X=47.25–59.95, Z=−0.5–12.25,
@@ -144,8 +150,8 @@ combined pocket's 5.95mm clearance from right µUSB centre.
 | Feature | X | Y from bottom long edge | Notes |
 | -- | -- | -- | -- |
 | Reset button | 20.5mm | 5mm | label 6 in image; 1.5mm diameter through-hole in back plate |
-| Power LED | 2mm | 18.5mm | 1×2mm window — through-hole (single filament) or transparent plug via `leds.scad` (multi-filament) |
-| Indicator LEDs ×4 | 15–22.5mm (left edge to right edge) | 3mm | 7.5×2mm window — same approach as power LED |
+| Power LED | 2mm | 19.0mm | 1×2mm window — through-hole (single filament) or transparent plug via `leds.scad` (multi-filament) |
+| Indicator LEDs ×4 | 14.5–22.5mm (left edge to right edge) | 3mm | 8×2mm window — same approach as power LED |
 
 ### Waveshare HAT
 
@@ -155,34 +161,36 @@ combined pocket's 5.95mm clearance from right µUSB centre.
 | Width | 30mm |
 | Height | 9.5mm |
 
-Case orientation: rotated 90° (30mm wide × 66mm tall), hand-wired.
+Mounted near the display via two ⌀2.8mm holder pegs (66mm long edge along X,
+30mm wide, holes 57.5mm apart and 4.25mm in from each end), hand-wired.
 
 ---
 
 ## Back-Cavity Layout (top view, X from left inner wall)
 
 ```text
-x=0      x=37     x=65          x=95   x=135
-┌────────┬─────────┬──────────────┬──────┐
-│        │ battery │              │      │
-│HAT     │  28×59  │  HAT (30×66) │      │
-│area 2  │portrait │  rotated 90° │      │
-│(empty) │         │  hand-wired  │      │
-│        │         │              │      │
-│        │         │              │      │
-├────────┴─────────┤              │      │
-│ Pi Zero + PiSugar (65×30)       │      │
-│ [←SD]  [HDMI][µUSB][µUSB]       │      │
-│ [B5][▪▪▪▪][B4]       [USB-C]    │      │
-└─────────────────────────────────┴──────┘
-←──────────65mm──────────→←─30mm─→
+x=0   x=37.3  x=67.3                    x=133
+┌──────┬────────┬──────────────────────────┐
+│      │battery │                          │
+│      │ 28×59  │  (empty — HAT mounted    │
+│      │portrait│   near display via pegs) │
+│      │        │                          │
+│      │        │                          │
+├──────┴────────┤                          │
+│ Pi Zero + PiSugar (65×30)                │
+│ [←SD]  [HDMI][µUSB][µUSB]                │
+│ [B5][▪▪▪▪][B4]           [USB-C]         │
+└──────────────────────────────────────────┘
+←──────65mm──────→
 ```
 
 Key alignments:
 
-- Battery right edge = Pi Zero right edge = X=65mm (short wire to PiSugar)
-- HAT at X=65–95mm (65+30=95mm fits interior ✓)
-- HAT area 2 (X=0–37mm) reserved for potential future use
+- Battery right edge = Pi Zero right edge = X=65.3mm (0.3mm shift applied; short
+  wire to PiSugar)
+- HAT (30×66) mounted near display pillars via two ⌀2.8mm pegs; no longer in
+  lower bay
+- Right zone (X=67.3–133mm) empty at lower Y
 
 ---
 
@@ -214,9 +222,9 @@ orientation. A 2mm ejection hole on the inner Y wall allows pin removal.
 
 ### Mating-face rabbet/tongue joint
 
-Back shell has a 1mm-wide × 1.5mm-deep rabbet cut into the inner face of all four
-walls at the mating face. Front shell has a matching rectangular tongue ring
-that protrudes below the mating face and fits into the rabbet.
+Back shell has a 1mm-wide × 1.5mm-deep rabbet cut into the inner face of all
+four walls at the mating face. Front shell has a matching rectangular tongue
+ring that protrudes below the mating face and fits into the rabbet.
 
 | Parameter | Value | Notes |
 | -- | -- | -- |
@@ -270,7 +278,16 @@ chosen to match component depth without over-constraining removal.
 | Zone | Wall height |
 | -- | -- |
 | Battery bay walls | **12.5mm** (= bat_depth; fully contains battery) |
-| Pi stack / HAT bay walls | 10mm |
+| Pi stack bay walls | 10mm |
+
+A 5×5×1mm pad on the floor at the Pi stack's near corner (X=`wall_t`–`wall_t+5`,
+Y=`wall_t`–`wall_t+5`) raises that corner by 1mm to prevent the stack from
+tilting.
+
+A 0.3mm-wide ridge along the inner west wall (X=`wall_t`–`_elec_x`,
+Y=`_elec_y`–`_elec_y+elec_l`, Z up to 7.5mm — below the SD card slot) acts as a
+stop for the Pi stack's left PCB edge, enforcing the `_elec_x = wall_t + 0.3`
+offset so the SD card tip sits flush with the case exterior.
 
 ---
 
@@ -365,14 +382,14 @@ Buttons mounted on an insertable carrier — see carrier design notes.
 ### Carrier support structures
 
 The carrier rests at Z=14mm (back exterior origin) and is inserted vertically
-from the mating face. Three support features retain it:
+from the mating face. Four support features retain it:
 
 | Feature | Description | Top Z |
 | -- | -- | -- |
 | Left diagonal wedge | Ramp Z=11→14 at X=wall_t to X≈5.6mm, full Y span. Vertical retain blocks Z=14–18 at south (Y=2–6.5) and north (Y=28.5–33.5) of carrier | 18mm retain / 14mm ledge |
-| Pi stack right wall | wall_t-wide at X=_hat_x (67mm); U-channel: retain walls Z=2–18 south/north, ledge Z=2–14 in carrier zone | 18mm retain / 14mm ledge |
-| HAT-bay right wall | wall_t-wide at X=_hat_x+hat_w (97mm); same U-channel profile (existing wall reaches only Z=12) | 18mm retain / 14mm ledge |
-| Right-wall ledge | 3mm-wide at X=130–133mm; same U-channel profile | 18mm retain / 14mm ledge |
+| Freestanding column 1 | wall_t-wide at X=`_elec_x+elec_w+12` (≈79mm, +2mm off the nominal 10mm-gap position to clear the carrier's wire-channel groove); same U-channel profile | 18mm retain / 14mm ledge |
+| Freestanding column 2 | wall_t-wide at X=midpoint of col1's nominal position and right inner wall, minus 2mm (≈103mm, shifted to clear its wire-channel groove); same U-channel profile | 18mm retain / 14mm ledge |
+| Right-wall ledge | 2.875mm-wide at the right inner wall (X=130–133mm; trimmed from 3mm to clear a 0.125mm overlap with the rightmost wire-channel groove); same U-channel profile | 18mm retain / 14mm ledge |
 
 **U-channel profile:** each column has three Y sections:
 
@@ -423,6 +440,19 @@ but irrelevant — the front-bezel hole is independent of the carrier. The carri
 only needs to clear the switch body top at Y=27.5mm, giving 2.5mm margin. In Z,
 the carrier (Z≈14mm) sits below the header top (Z=18mm) and they do not share Y
 space, so there is no volumetric conflict.
+
+### Pi-stack lateral lock (insertable shim)
+
+Wedges into the 12mm gap between the Pi stack's right PCB edge
+(X=`_elec_x+elec_w`) and carrier support column 1 (X=`_elec_x+elec_w+12`),
+locking the stack against X movement. Inserted vertically from the mating face,
+full pillar height (`back_depth − wall_t`).
+
+| Parameter | Value | Notes |
+| -- | -- | -- |
+| Thickness (X) | `12 − 0.5×tol = 11.9mm` | leaves 0.1mm clearance to column 1; oversized for trimming if print is slightly off |
+| Y extent | `wall_t` to `_cni` (= `btn_row_y1 − 4 − 0.5×tol`) | south-retain zone of column 1, south of the carrier; avoids colliding with the carrier or the south-wall rabbet. Uses the same per-side tolerance as the carrier-seating cutaways (`_cni`/`_csi`) — the carrier's own Y tolerance can't be reused here due to cable guides |
+| Guide wedge | flat face at Y=`_cni`, ramps Z=`wall_t`→`wall_t+3` over 1.5mm (north of the shim) | back-shell floor feature, same hull pattern as the divider's south/north guide wedges — retains the shim's north edge |
 
 ---
 

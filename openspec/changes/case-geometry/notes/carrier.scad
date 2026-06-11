@@ -1,19 +1,13 @@
 // Button carrier — holds 8 × 6×6mm tactile switches in 4×2 grid
 include <params.scad>
 
-_sw       = 6;   // switch body footprint (mm)
 _sw_b     = 3;   // switch base height (mm)
 _floor    = 1;   // material below switch base (mm)
-_margin_y = 1;   // Y margin beyond outermost switch edges (mm)
 _pin_d    = 1;   // pin hole diameter (mm)
 
-_car_w = case_w - 2 * wall_t;
+_car_w = case_w - 2 * wall_t - 0.5 * tol;
 _car_l = (btn_row_y2 - btn_row_y1) + _sw + 2 * _margin_y;  // 22mm
 _car_t = _sw_b + _floor;                                     // 4mm
-
-// Switch row Y centres in carrier local coords (origin at carrier corner)
-_loc_y1 = _sw / 2 + _margin_y;                    // 4mm  — bottom row
-_loc_y2 = _loc_y1 + (btn_row_y2 - btn_row_y1);   // 18mm — top row
 
 _rail_w = 6;   // rail width in X (mm)
 _rail_h = 2;   // rail height above carrier top (mm) — closes gap to front plate inner face

@@ -4,6 +4,9 @@
 include <params.scad>
 use <parts.scad>
 
-// Windows sit in the back plate (Z=0..wall_t), positioned at the pi stack origin.
+// Windows: thin (0.4mm = 2 layers @ 0.2mm) transparent plugs flush with the
+// back plate's exterior face (Z=0), leaving the rest of the through-hole
+// (Z=0.4..wall_t) open. Thin keeps the LEDs distinct/countable and maximizes
+// brightness for the dim power LED, rather than diffusing them.
 translate([_elec_x, _elec_y, 0])
-    led_indicator_shapes(wall_t);
+    led_indicator_shapes(0.4);

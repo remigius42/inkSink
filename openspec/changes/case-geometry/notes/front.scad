@@ -35,7 +35,8 @@ module front() {
             polygon(polyRound(_outer, 32));
 
         // Display window — active screen area only; origin at _screen_x / panel bottom + short border
-        translate([_screen_x, _disp_y + display_border_short, -0.1])
+        // _disp_shift matches back.scad: display sits 0.6mm below centred position for top lip
+        translate([_screen_x, _disp_y - disp_shift + display_border_short, -0.1])
             chamfer_fillet_extrude(front_depth + 0.2, fillet_r, edge_overhang_angle, fn=20, invert=true)
                 square([screen_area_w, screen_area_h]);
 
