@@ -229,8 +229,8 @@ module back() {
                 _ll_dx = (_ll_z1 - _ll_z0) / tan(40);     // ramp reach ≈ 3.87mm
                 _ll_y0 = wall_t;                           // south inner wall face
                 _ll_y1 = side_screw_y[0] - tower_w/2 - 1; // 33.5mm — fuses with nut tower receiver
-                _ll_cni = btn_row_y1 - 4 - 0.25 * tol;        // 6.45mm carrier south edge (matches column _cni)
-                _ll_csi = btn_row_y2 + 4 + 0.25 * tol;        // 28.55mm carrier north edge (matches column _csi)
+                _ll_cni = btn_row_y1 - 4 - 0.25 * tol;        // 6.45mm carrier south edge (intentionally tighter than column _cni: validated fit, printed)
+                _ll_csi = btn_row_y2 + 4 + 0.25 * tol;        // 28.55mm carrier north edge (intentionally tighter than column _csi: validated fit, printed)
                 // Ramp spans full Y range
                 translate([0, _ll_y1, 0])
                     rotate([90, 0, 0])

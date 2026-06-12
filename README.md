@@ -64,7 +64,7 @@ If building from scratch isn't for you, these off-the-shelf devices support cust
 - **6mm tactile switches** — 6-8 buttons with 3D printed caps
 - **3D printed case** — Custom enclosure, 26mm uniform depth
 
-**Total cost:** €120-170
+**Total cost:** €124-179
 
 ### Physical Design
 
@@ -158,7 +158,7 @@ Full bill of materials: [hardware/bom.md](hardware/bom.md)
 
 **Quick overview:**
 
-1. **Order components** (~€150 total)
+1. **Order components** (€124-179 total)
 1. **3D print case and button caps**
 1. **Solder button wires** to GPIO pins (28AWG with heat shrink)
 1. **Assemble electronics** (PiSugar → Pi → HAT stack)
