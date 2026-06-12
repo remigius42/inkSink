@@ -7,7 +7,7 @@
 Portable e-ink device for Anki flashcard reviews and reading. Runs on a
 Raspberry Pi Zero 2 W with a Waveshare 7.5" display and PiSugar 3 battery.
 
-**Bill of materials:** [hardware/bom.md](../hardware/bom.md) — ~€150 total,
+**Bill of materials:** [hardware/bom.md](../hardware/bom.md) — €124-179 total,
 CH/EU sources listed.
 
 ______________________________________________________________________
